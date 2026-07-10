@@ -66,6 +66,15 @@ jobs:
           }
           cargo generate-lockfile 2>&1 | tee -a /tmp/jcode-sol-validation.log
           cargo metadata --no-deps --format-version 1 >/tmp/jcode-sol-metadata.json
+          tar --exclude='.git' --exclude='target' -czf /tmp/jcode-sol-candidate.tar.gz .
+
+      - name: Upload integration candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: jcode-sol-candidate-${{ github.run_id }}
+          retention-days: 7
+          if-no-files-found: error
+          path: /tmp/jcode-sol-candidate.tar.gz
 
       - name: Check feature-isolated application builds
         shell: bash
