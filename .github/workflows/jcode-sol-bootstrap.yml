@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - jcode-sol
+  pull_request:
+    branches:
+      - jcode-sol-ci-base
   workflow_dispatch:
 
 permissions:
@@ -15,6 +18,7 @@ concurrency:
 
 jobs:
   refactor-and-validate:
+    if: github.event_name != 'pull_request' || github.head_ref == 'jcode-sol'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
