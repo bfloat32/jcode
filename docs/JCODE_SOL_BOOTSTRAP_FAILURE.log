@@ -1,26 +1,2467 @@
 rustc 1.97.0 (2d8144b78 2026-07-07)
 cargo 1.97.0 (c980f4866 2026-06-30)
-Traceback (most recent call last):
-  File "/home/runner/work/jcode/jcode/scripts/jcode_sol_refactor.py", line 415, in <module>
-    main()
-  File "/home/runner/work/jcode/jcode/scripts/jcode_sol_refactor.py", line 405, in main
-    integrate_lite_tree()
-  File "/home/runner/work/jcode/jcode/scripts/jcode_sol_refactor.py", line 98, in integrate_lite_tree
-    run("git", "merge", "--squash", "--no-commit", "-X", "theirs", LITE_REF)
-  File "/home/runner/work/jcode/jcode/scripts/jcode_sol_refactor.py", line 39, in run
-    raise RuntimeError(
-RuntimeError: command failed (128): git merge --squash --no-commit -X theirs origin/lite
-Committer identity unknown
+jcode-sol v0.40 OpenAI/local integration applied
+Diff in /home/runner/work/jcode/jcode/crates/jcode-app-core/src/agent.rs:322:
+             .try_read()
+             .map(|skills| Arc::new(skills.clone()))
+             .unwrap_or_else(|_| self.skills.clone());
+-        let working_dir = self.session.working_dir.as_deref().map(std::path::Path::new);
++        let working_dir = self
++            .session
++            .working_dir
++            .as_deref()
++            .map(std::path::Path::new);
+         Arc::new(SkillRegistry::effective_for_working_dir(
+             &global,
+             working_dir,
+Diff in /home/runner/work/jcode/jcode/crates/jcode-app-core/src/tool/browser.rs:212:
+         for (name, schema) in [
+             ("url", json!({"type": "string"})),
+             ("tab_id", json!({"type": "integer"})),
+-            ("window_id", json!({"type": "integer", "description": "Scope the action to a specific browser window. Useful when multiple agents drive the browser in parallel."})),
++            (
++                "window_id",
++                json!({"type": "integer", "description": "Scope the action to a specific browser window. Useful when multiple agents drive the browser in parallel."}),
++            ),
+             ("frame_id", json!({"type": "integer"})),
+             ("all_frames", json!({"type": "boolean"})),
+             ("selector", json!({"type": "string"})),
+Diff in /home/runner/work/jcode/jcode/crates/jcode-app-core/src/tool/skill.rs:83:
+         let _args = params.args.as_deref();
+ 
+         match params.action.as_str() {
+-            "load" => self.load_skill(params.name, ctx.working_dir.as_deref()).await,
++            "load" => {
++                self.load_skill(params.name, ctx.working_dir.as_deref())
++                    .await
++            }
+             "list" => self.list_skills(ctx.working_dir.as_deref()).await,
+             "reload" => self.reload_skill(params.name).await,
+             "reload_all" => self.reload_all_skills(ctx.working_dir.as_deref()).await,
+Diff in /home/runner/work/jcode/jcode/crates/jcode-app-core/src/tool/skill.rs:90:
+-            "read" => self.read_skill(params.name, ctx.working_dir.as_deref()).await,
++            "read" => {
++                self.read_skill(params.name, ctx.working_dir.as_deref())
++                    .await
++            }
+             _ => Ok(ToolOutput::new(format!(
+                 "Unknown action: {}. Use 'load', 'list', 'reload', 'reload_all', or 'read'.",
+                 params.action
+Diff in /home/runner/work/jcode/jcode/crates/jcode-app-core/src/tool/skill.rs:257:
+                     output.push_str(&format!("- /{}: {}\n", skill.name, skill.description));
+                 }
+ 
+-                Ok(ToolOutput::new(output)
+-                    .with_title(format!("Skills: Reloaded {}", global_count)))
++                Ok(
++                    ToolOutput::new(output)
++                        .with_title(format!("Skills: Reloaded {}", global_count)),
++                )
+             }
+             Err(e) => {
+                 crate::logging::warn(&format!(
+Diff in /home/runner/work/jcode/jcode/crates/jcode-app-core/src/tool/skill.rs:619:
+         drop(shared);
+ 
+         // Skill file edits are visible without any reload/restart.
+-        let skill_md = repo_a
+-            .path()
+-            .join(".agents/skills/repo-a-skill/SKILL.md");
++        let skill_md = repo_a.path().join(".agents/skills/repo-a-skill/SKILL.md");
+         std::fs::write(
+             &skill_md,
+             "---\nname: repo-a-skill\ndescription: Updated description\n---\n\nNew body.",
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-core/src/selection.rs:237:
+     #[test]
+     fn parses_lite_provider_hints() {
+         assert_eq!(parse_provider_hint("openai"), Some(ActiveProvider::OpenAI));
+-        assert_eq!(parse_provider_hint("local"), Some(ActiveProvider::OpenRouter));
+-        assert_eq!(parse_provider_hint("ollama"), Some(ActiveProvider::OpenRouter));
++        assert_eq!(
++            parse_provider_hint("local"),
++            Some(ActiveProvider::OpenRouter)
++        );
++        assert_eq!(
++            parse_provider_hint("ollama"),
++            Some(ActiveProvider::OpenRouter)
++        );
+         assert_eq!(parse_provider_hint("Anthropic"), None);
+         assert_eq!(parse_provider_hint("bedrock"), None);
+     }
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-core/src/selection.rs:264:
+ 
+     #[test]
+     fn cli_provider_arg_translates_only_openai_runtime_keys() {
+-        assert_eq!(cli_provider_arg_for_session_key("openai-oauth"), Some("openai"));
+-        assert_eq!(cli_provider_arg_for_session_key("openai-api-key"), Some("openai-api"));
++        assert_eq!(
++            cli_provider_arg_for_session_key("openai-oauth"),
++            Some("openai")
++        );
++        assert_eq!(
++            cli_provider_arg_for_session_key("openai-api-key"),
++            Some("openai-api")
++        );
+         assert_eq!(cli_provider_arg_for_session_key("claude-oauth"), None);
+         assert_eq!(cli_provider_arg_for_session_key("openrouter"), None);
+         assert_eq!(cli_provider_arg_for_session_key("local:qwen"), None);
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-core/src/selection.rs:275:
+     fn parses_lite_model_provider_prefixes() {
+         for (raw, expected_provider, expected_prefix, expected_model) in [
+             ("openai:gpt-5", ActiveProvider::OpenAI, "openai:", "gpt-5"),
+-            ("openai-oauth:gpt-5", ActiveProvider::OpenAI, "openai-oauth:", "gpt-5"),
+-            ("openai-api:gpt-5", ActiveProvider::OpenAI, "openai-api:", "gpt-5"),
++            (
++                "openai-oauth:gpt-5",
++                ActiveProvider::OpenAI,
++                "openai-oauth:",
++                "gpt-5",
++            ),
++            (
++                "openai-api:gpt-5",
++                ActiveProvider::OpenAI,
++                "openai-api:",
++                "gpt-5",
++            ),
+             ("local:qwen", ActiveProvider::OpenRouter, "local:", "qwen"),
+             ("ollama:qwen", ActiveProvider::OpenRouter, "ollama:", "qwen"),
+-            ("lmstudio:qwen", ActiveProvider::OpenRouter, "lmstudio:", "qwen"),
++            (
++                "lmstudio:qwen",
++                ActiveProvider::OpenRouter,
++                "lmstudio:",
++                "qwen",
++            ),
+         ] {
+             let (provider, prefix, model) = explicit_model_provider_prefix(raw).unwrap();
+             assert_eq!(provider, expected_provider, "{raw}");
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-core/src/selection.rs:376:
+                 cheapness: None,
+             },
+         ];
+-        assert_eq!(dedupe_model_routes(routes.clone()), dedupe_model_routes_reference(routes));
++        assert_eq!(
++            dedupe_model_routes(routes.clone()),
++            dedupe_model_routes_reference(routes)
++        );
+     }
+ }
+ 
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/adapter.rs:2:
+ use jcode_message_types::{ContentBlock, Message, Role, StreamEvent, ToolCall, ToolDefinition};
+ use serde_json::json;
+ 
+-use crate::chat::{LocalChatMessage, LocalChatRequest, LocalFunctionCall, LocalToolCall, LocalToolDefinition};
++use crate::chat::{
++    LocalChatMessage, LocalChatRequest, LocalFunctionCall, LocalToolCall, LocalToolDefinition,
++};
+ use crate::stream::LocalStreamSummary;
+ 
+ /// Convert jcode's canonical message/tool representation into a generic
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/adapter.rs:56:
+                 // Provider-native/internal state is not replayable to a generic
+                 // local Chat Completions endpoint.
+             }
+-            ContentBlock::ToolUse { id, name, input, .. } => {
++            ContentBlock::ToolUse {
++                id, name, input, ..
++            } => {
+                 tool_calls.push(LocalToolCall {
+                     id: Some(id.clone()),
+                     kind: "function".into(),
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/adapter.rs:66:
+                     },
+                 });
+             }
+-            ContentBlock::ToolResult { tool_use_id, content, .. } => {
++            ContentBlock::ToolResult {
++                tool_use_id,
++                content,
++                ..
++            } => {
+                 tool_results.push(LocalChatMessage {
+                     role: "tool".into(),
+                     content: Some(content.clone()),
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/adapter.rs:92:
+             content: non_empty_joined_text(text_parts),
+             name: None,
+             tool_call_id: None,
+-            tool_calls: if tool_calls.is_empty() { None } else { Some(tool_calls) },
++            tool_calls: if tool_calls.is_empty() {
++                None
++            } else {
++                Some(tool_calls)
++            },
+         });
+     }
+     out.extend(tool_results);
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/adapter.rs:117:
+     }
+ 
+     for tool_call in summary.tool_calls {
+-        let id = tool_call.id.unwrap_or_else(|| "local_tool_call".to_string());
++        let id = tool_call
++            .id
++            .unwrap_or_else(|| "local_tool_call".to_string());
+         events.push(StreamEvent::ToolUseStart {
+             id,
+             name: tool_call.function.name,
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/adapter.rs:130:
+         events.push(StreamEvent::TokenUsage {
+             input_tokens: number_field(&usage, &["input_tokens", "prompt_tokens"]),
+             output_tokens: number_field(&usage, &["output_tokens", "completion_tokens"]),
+-            cache_read_input_tokens: number_field(&usage, &["cache_read_input_tokens", "prompt_cache_hit_tokens"]),
+-            cache_creation_input_tokens: number_field(&usage, &["cache_creation_input_tokens", "prompt_cache_miss_tokens"]),
++            cache_read_input_tokens: number_field(
++                &usage,
++                &["cache_read_input_tokens", "prompt_cache_hit_tokens"],
++            ),
++            cache_creation_input_tokens: number_field(
++                &usage,
++                &["cache_creation_input_tokens", "prompt_cache_miss_tokens"],
++            ),
+         });
+     }
+ 
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/adapter.rs:162:
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+-    use crate::chat::{LocalToolCall, LocalFunctionCall};
++    use crate::chat::{LocalFunctionCall, LocalToolCall};
+     use crate::stream::LocalStreamSummary;
+     use serde_json::json;
+ 
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/adapter.rs:178:
+         assert_eq!(request.model, "qwen");
+         assert_eq!(request.messages[0].role, "system");
+         assert_eq!(request.messages[1].role, "user");
+-        assert_eq!(request.tools.as_ref().unwrap()[0].function.name, "read_file");
++        assert_eq!(
++            request.tools.as_ref().unwrap()[0].function.name,
++            "read_file"
++        );
+     }
+ 
+     #[test]
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/adapter.rs:197:
+         let result = Message::tool_result("call_1", "/tmp", false);
+         let request = build_local_chat_request("qwen", &[assistant, result], &[], "").unwrap();
+         assert_eq!(request.messages[0].role, "assistant");
+-        assert_eq!(request.messages[0].tool_calls.as_ref().unwrap()[0].id.as_deref(), Some("call_1"));
++        assert_eq!(
++            request.messages[0].tool_calls.as_ref().unwrap()[0]
++                .id
++                .as_deref(),
++            Some("call_1")
++        );
+         assert_eq!(request.messages[1].role, "tool");
+         assert_eq!(request.messages[1].tool_call_id.as_deref(), Some("call_1"));
+     }
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/cache.rs:45:
+     if !path.exists() {
+         return Ok(None);
+     }
+-    let raw = fs::read_to_string(path).with_context(|| format!("failed to read {}", path.display()))?;
++    let raw =
++        fs::read_to_string(path).with_context(|| format!("failed to read {}", path.display()))?;
+     let entry: LocalModelCacheEntry = serde_json::from_str(&raw)
+         .with_context(|| format!("failed to parse {}", path.display()))?;
+     if entry.is_fresh(expected_api_base, ttl_secs) {
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/cache.rs:98:
+         }
+     }
+ 
+-    let output = output
+-        .trim_matches(|ch| ch == '.' || ch == '_')
+-        .to_string();
++    let output = output.trim_matches(|ch| ch == '.' || ch == '_').to_string();
+     if output.is_empty() {
+         "local".to_string()
+     } else {
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/cache.rs:130:
+     #[test]
+     fn sanitizes_namespace_for_file_names() {
+         assert_eq!(sanitize_namespace("ollama"), "ollama");
+-        assert_eq!(sanitize_namespace("http://127.0.0.1:11434/v1"), "http_127.0.0.1_11434_v1");
++        assert_eq!(
++            sanitize_namespace("http://127.0.0.1:11434/v1"),
++            "http_127.0.0.1_11434_v1"
++        );
+         assert_eq!(sanitize_namespace("../../secret"), "secret");
+         assert_eq!(sanitize_namespace("***"), "local");
+         assert_eq!(sanitize_namespace("lm studio/local"), "lm_studio_local");
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/lib.rs:52:
+ 
+     let auth = local_auth_for_resolved_profile(&resolved);
+     let config = if let Some(model) = resolved_local_model(&resolved) {
+-        LocalProviderConfig::new(resolved.display_name.clone(), model, &resolved.api_base, auth)?
++        LocalProviderConfig::new(
++            resolved.display_name.clone(),
++            model,
++            &resolved.api_base,
++            auth,
++        )?
+     } else {
+         LocalProviderConfig::new_auto(resolved.display_name.clone(), &resolved.api_base, auth)?
+     };
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/lib.rs:88:
+         bail!("named provider '{name}' enables provider routing, which is disabled in lite builds");
+     }
+     if config.extra_body.is_some() {
+-        bail!("named provider '{name}' uses extra_body, which native lite local runtime does not support yet");
++        bail!(
++            "named provider '{name}' uses extra_body, which native lite local runtime does not support yet"
++        );
+     }
+-    if let Some(api) = config.api.as_deref().map(str::trim).filter(|api| !api.is_empty()) {
+-        if !matches!(api, "chat-completions" | "chat_completions" | "openai-compatible") {
++    if let Some(api) = config
++        .api
++        .as_deref()
++        .map(str::trim)
++        .filter(|api| !api.is_empty())
++    {
++        if !matches!(
++            api,
++            "chat-completions" | "chat_completions" | "openai-compatible"
++        ) {
+             bail!("named provider '{name}' uses unsupported api '{api}' in lite builds");
+         }
+     }
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/lib.rs:332:
+             }],
+             ..Default::default()
+         };
+-        assert_eq!(named_provider_model(&with_default).as_deref(), Some("configured"));
++        assert_eq!(
++            named_provider_model(&with_default).as_deref(),
++            Some("configured")
++        );
+ 
+         let from_list = NamedProviderConfig {
+             base_url: "http://127.0.0.1:11434/v1".into(),
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/lib.rs:378:
+             default_model: Some("profile-model".into()),
+             requires_api_key: false,
+         };
+-        assert_eq!(resolved_local_model(&resolved).as_deref(), Some("profile-model"));
++        assert_eq!(
++            resolved_local_model(&resolved).as_deref(),
++            Some("profile-model")
++        );
+     }
+ 
+     #[tokio::test]
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/lib.rs:391:
+             let read = socket.read(&mut request).await.unwrap();
+             let request = String::from_utf8_lossy(&request[..read]);
+             assert!(request.starts_with("GET /v1/models "));
+-            assert!(request.contains("authorization: Bearer local-secret") || request.contains("Authorization: Bearer local-secret"));
++            assert!(
++                request.contains("authorization: Bearer local-secret")
++                    || request.contains("Authorization: Bearer local-secret")
++            );
+ 
+             let body = r#"{"data":[{"id":" qwen3-coder "},{"id":"llama-3.3"},{"id":"qwen3-coder"},{"id":""}]}"#;
+             let response = format!(
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/lib.rs:428:
+     #[tokio::test]
+     async fn cached_discovery_returns_fresh_cache_without_network() {
+         let path = temp_file("cached.json");
+-        let cached = vec![DiscoveredModel { id: "cached-model".into() }];
++        let cached = vec![DiscoveredModel {
++            id: "cached-model".into(),
++        }];
+         cache::save_model_cache(&path, "http://127.0.0.1:11434/v1", &cached).unwrap();
+ 
+         let client = reqwest::Client::new();
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/lib.rs:435:
+-        let models = discover_models_cached(
+-            &client,
+-            "http://127.0.0.1:11434/v1",
+-            None,
+-            &path,
+-            60,
+-        )
+-        .await
+-        .unwrap();
++        let models = discover_models_cached(&client, "http://127.0.0.1:11434/v1", None, &path, 60)
++            .await
++            .unwrap();
+ 
+         assert_eq!(models, cached);
+         let _ = std::fs::remove_file(path);
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/provider.rs:114:
+             return Ok(model);
+         }
+ 
+-        let discovered = crate::discover_models_with_transport(&self.client, &self.transport).await?;
++        let discovered =
++            crate::discover_models_with_transport(&self.client, &self.transport).await?;
+         let model = discovered
+             .into_iter()
+             .map(|model| model.id.trim().to_string())
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/provider.rs:145:
+                 .request(&self.client, reqwest::Method::POST, "chat/completions")?
+                 .json(&request)
+                 .send();
+-            let response = tokio::time::timeout(self.transport.stream_idle_timeout, response_future)
+-                .await
+-                .map_err(|_| local_idle_timeout_error(self.transport.stream_idle_timeout))?;
++            let response =
++                tokio::time::timeout(self.transport.stream_idle_timeout, response_future)
++                    .await
++                    .map_err(|_| local_idle_timeout_error(self.transport.stream_idle_timeout))?;
+ 
+             match response {
+                 Ok(response) if response.status().is_success() => {
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/provider.rs:154:
+-                    let body = tokio::time::timeout(
+-                        self.transport.stream_idle_timeout,
+-                        response.text(),
+-                    )
+-                    .await
+-                    .map_err(|_| local_idle_timeout_error(self.transport.stream_idle_timeout))?
+-                    .context("failed to read local chat completion response")?;
++                    let body =
++                        tokio::time::timeout(self.transport.stream_idle_timeout, response.text())
++                            .await
++                            .map_err(|_| {
++                                local_idle_timeout_error(self.transport.stream_idle_timeout)
++                            })?
++                            .context("failed to read local chat completion response")?;
+                     return normalize_chat_response_body(&body);
+                 }
+-                Ok(response) if self.retry_policy.should_retry_status(response.status())
+-                    && self.retry_policy.should_retry_attempt(attempt) =>
++                Ok(response)
++                    if self.retry_policy.should_retry_status(response.status())
++                        && self.retry_policy.should_retry_attempt(attempt) =>
+                 {
+                     let retry_after = response
+                         .headers()
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/provider.rs:176:
+                 Ok(response) => {
+                     let status = response.status();
+                     let body = response.text().await.unwrap_or_default();
+-                    return Err(anyhow!("local chat completion failed with {status}: {body}"));
++                    return Err(anyhow!(
++                        "local chat completion failed with {status}: {body}"
++                    ));
+                 }
+                 Err(error) if self.retry_policy.should_retry_attempt(attempt) => {
+                     last_error = Some(error.into());
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/provider.rs:324:
+ 
+     #[test]
+     fn config_rejects_empty_model_and_defaults_display_name() {
+-        assert!(LocalProviderConfig::new("Local", " ", "http://127.0.0.1:11434/v1", LocalAuth::None).is_err());
+-        let config = LocalProviderConfig::new(" ", "qwen", "http://127.0.0.1:11434/v1", LocalAuth::None).unwrap();
++        assert!(
++            LocalProviderConfig::new("Local", " ", "http://127.0.0.1:11434/v1", LocalAuth::None)
++                .is_err()
++        );
++        let config =
++            LocalProviderConfig::new(" ", "qwen", "http://127.0.0.1:11434/v1", LocalAuth::None)
++                .unwrap();
+         assert_eq!(config.display_name, "Local");
+     }
+ 
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/provider.rs:342:
+     #[test]
+     fn fork_has_independent_model_state() {
+         let provider = LocalProvider::new(
+-            LocalProviderConfig::new("Local", "qwen", "http://127.0.0.1:11434/v1", LocalAuth::None)
+-                .unwrap(),
++            LocalProviderConfig::new(
++                "Local",
++                "qwen",
++                "http://127.0.0.1:11434/v1",
++                LocalAuth::None,
++            )
++            .unwrap(),
+         );
+         let fork = provider.fork();
+         provider.set_model("llama").unwrap();
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/provider.rs:392:
+         });
+ 
+         let provider = LocalProvider::new(
+-            LocalProviderConfig::new_auto("Ollama", format!("http://{address}/v1"), LocalAuth::None)
+-                .unwrap(),
++            LocalProviderConfig::new_auto(
++                "Ollama",
++                format!("http://{address}/v1"),
++                LocalAuth::None,
++            )
++            .unwrap(),
+         );
+-        let events = provider.complete_once(&[user_message("hello")], &[], "").await.unwrap();
++        let events = provider
++            .complete_once(&[user_message("hello")], &[], "")
++            .await
++            .unwrap();
+         server.await.unwrap();
+         assert_eq!(provider.model(), "qwen-auto");
+         assert!(matches!(events[0], StreamEvent::TextDelta(ref text) if text == "ok"));
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/provider.rs:426:
+             max_delay: Duration::from_millis(1),
+         };
+         let provider = LocalProvider::new(config);
+-        let err = provider.complete_once(&[user_message("hello")], &[], "").await.unwrap_err();
++        let err = provider
++            .complete_once(&[user_message("hello")], &[], "")
++            .await
++            .unwrap_err();
+         server.await.unwrap();
+         assert!(err.to_string().contains("timed out"));
+     }
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/provider.rs:466:
+             )
+             .unwrap(),
+         );
+-        let mut stream = provider.complete(&[user_message("hello")], &[], "", None).await.unwrap();
++        let mut stream = provider
++            .complete(&[user_message("hello")], &[], "", None)
++            .await
++            .unwrap();
+         let mut events = Vec::new();
+         while let Some(event) = stream.next().await {
+             events.push(event.unwrap());
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/provider.rs:473:
+         }
+         server.await.unwrap();
+         assert!(matches!(events[0], StreamEvent::TextDelta(ref text) if text == "hi"));
+-        assert!(matches!(events[1], StreamEvent::TokenUsage { input_tokens: Some(1), output_tokens: Some(2), .. }));
++        assert!(matches!(
++            events[1],
++            StreamEvent::TokenUsage {
++                input_tokens: Some(1),
++                output_tokens: Some(2),
++                ..
++            }
++        ));
+         assert!(matches!(events[2], StreamEvent::MessageEnd { .. }));
+     }
+ 
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/provider.rs:516:
+             .unwrap()
+             .with_retry_policy(retry),
+         );
+-        let events = provider.complete_once(&[user_message("hello")], &[], "").await.unwrap();
++        let events = provider
++            .complete_once(&[user_message("hello")], &[], "")
++            .await
++            .unwrap();
+         server.await.unwrap();
+         assert!(matches!(events[0], StreamEvent::TextDelta(ref text) if text == "ok"));
+     }
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/provider.rs:547:
+             )
+             .unwrap(),
+         );
+-        let err = provider.complete_once(&[user_message("hello")], &[], "").await.unwrap_err();
++        let err = provider
++            .complete_once(&[user_message("hello")], &[], "")
++            .await
++            .unwrap_err();
+         server.await.unwrap();
+         assert!(err.to_string().contains("invalid OpenAI-compatible"));
+     }
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/retry.rs:87:
+             base_delay: Duration::from_millis(100),
+             max_delay: Duration::from_secs(5),
+         };
+-        assert_eq!(policy.retry_after_delay(Some("2")), Some(Duration::from_secs(2)));
+-        assert_eq!(policy.retry_after_delay(Some("30")), Some(Duration::from_secs(5)));
+-        assert_eq!(policy.retry_after_delay(Some("Wed, 21 Oct 2015 07:28:00 GMT")), None);
++        assert_eq!(
++            policy.retry_after_delay(Some("2")),
++            Some(Duration::from_secs(2))
++        );
++        assert_eq!(
++            policy.retry_after_delay(Some("30")),
++            Some(Duration::from_secs(5))
++        );
++        assert_eq!(
++            policy.retry_after_delay(Some("Wed, 21 Oct 2015 07:28:00 GMT")),
++            None
++        );
+     }
+ }
+ 
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/sse.rs:104:
+ 
+     #[test]
+     fn parses_chat_completion_chunk() {
+-        let events = parse_sse_events(
+-            "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n",
+-        );
++        let events = parse_sse_events("data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n");
+         let chunk = parse_chat_chunk(&events[0]).unwrap().unwrap();
+         assert_eq!(chunk.choices[0].delta.content.as_deref(), Some("hi"));
+     }
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/transport.rs:95:
+         self.endpoint("responses")
+     }
+ 
+-    pub fn request(&self, client: &reqwest::Client, method: reqwest::Method, path: &str) -> Result<reqwest::RequestBuilder> {
++    pub fn request(
++        &self,
++        client: &reqwest::Client,
++        method: reqwest::Method,
++        path: &str,
++    ) -> Result<reqwest::RequestBuilder> {
+         let request = client
+             .request(method, self.endpoint(path)?)
+             .timeout(self.request_timeout);
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/transport.rs:109:
+ 
+     #[test]
+     fn creates_standard_openai_compatible_urls() {
+-        let config = LocalTransportConfig::new(
+-            "http://127.0.0.1:1234/v1/",
+-            LocalAuth::None,
+-        )
+-        .unwrap();
++        let config =
++            LocalTransportConfig::new("http://127.0.0.1:1234/v1/", LocalAuth::None).unwrap();
+         assert_eq!(
+             config.models_url().unwrap(),
+             "http://127.0.0.1:1234/v1/models"
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-local-runtime/src/transport.rs:130:
+ 
+     #[test]
+     fn rejects_absolute_endpoint_paths() {
+-        let config = LocalTransportConfig::new("http://127.0.0.1:8000/v1", LocalAuth::None)
+-            .unwrap();
++        let config =
++            LocalTransportConfig::new("http://127.0.0.1:8000/v1", LocalAuth::None).unwrap();
+         assert!(config.endpoint("https://example.com/steal").is_err());
+     }
+ 
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-metadata/src/lib.rs:361:
+             .collect::<Vec<_>>();
+         assert_eq!(
+             ids,
+-            vec!["openai", "openai-api", "ollama", "lmstudio", "openai-compatible"]
++            vec![
++                "openai",
++                "openai-api",
++                "ollama",
++                "lmstudio",
++                "openai-compatible"
++            ]
+         );
+         assert_eq!(
+             auth_status_login_providers()
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-metadata/src/lib.rs:374:
+ 
+     #[test]
+     fn lite_resolver_accepts_only_openai_and_local_aliases() {
+-        assert_eq!(resolve_login_provider("openai").map(|provider| provider.id), Some("openai"));
+-        assert_eq!(resolve_login_provider("openai-key").map(|provider| provider.id), Some("openai-api"));
+-        assert_eq!(resolve_login_provider("lm-studio").map(|provider| provider.id), Some("lmstudio"));
+-        assert_eq!(resolve_login_provider("custom").map(|provider| provider.id), Some("openai-compatible"));
++        assert_eq!(
++            resolve_login_provider("openai").map(|provider| provider.id),
++            Some("openai")
++        );
++        assert_eq!(
++            resolve_login_provider("openai-key").map(|provider| provider.id),
++            Some("openai-api")
++        );
++        assert_eq!(
++            resolve_login_provider("lm-studio").map(|provider| provider.id),
++            Some("lmstudio")
++        );
++        assert_eq!(
++            resolve_login_provider("custom").map(|provider| provider.id),
++            Some("openai-compatible")
++        );
+         assert_eq!(resolve_login_provider("anthropic"), None);
+         assert_eq!(resolve_login_provider("openrouter"), None);
+         assert_eq!(resolve_login_provider("bedrock"), None);
+Diff in /home/runner/work/jcode/jcode/crates/jcode-provider-metadata/src/lib.rs:386:
+     #[test]
+     fn lite_login_selection_supports_numbers_and_names() {
+         let providers = tui_login_providers();
+-        assert_eq!(resolve_login_selection("1", &providers).map(|provider| provider.id), Some("openai"));
+-        assert_eq!(resolve_login_selection("2", &providers).map(|provider| provider.id), Some("openai-api"));
+-        assert_eq!(resolve_login_selection("3", &providers).map(|provider| provider.id), Some("ollama"));
+-        assert_eq!(resolve_login_selection("custom", &providers).map(|provider| provider.id), Some("openai-compatible"));
++        assert_eq!(
++            resolve_login_selection("1", &providers).map(|provider| provider.id),
++            Some("openai")
++        );
++        assert_eq!(
++            resolve_login_selection("2", &providers).map(|provider| provider.id),
++            Some("openai-api")
++        );
++        assert_eq!(
++            resolve_login_selection("3", &providers).map(|provider| provider.id),
++            Some("ollama")
++        );
++        assert_eq!(
++            resolve_login_selection("custom", &providers).map(|provider| provider.id),
++            Some("openai-compatible")
++        );
+         assert!(resolve_login_selection("anthropic", &providers).is_none());
+     }
+ 
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/lib.rs:1289:
+                 return Some(xdg);
+             }
+             let legacy = dirs::home_dir()?.join(".i3").join("config");
+-            if legacy.exists() { Some(legacy) } else { Some(xdg) }
++            if legacy.exists() {
++                Some(legacy)
++            } else {
++                Some(xdg)
++            }
+         }
+         LinuxCompositor::Gnome
+         | LinuxCompositor::Kde
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/lib.rs:1359:
+     match comp {
+         LinuxCompositor::Gnome => gnome_keybinding_list().contains("/jcode-launch-"),
+         LinuxCompositor::Cinnamon => {
+-            dconf_read("/org/cinnamon/desktop/keybindings/custom-list")
+-                .contains("jcode-launch-")
++            dconf_read("/org/cinnamon/desktop/keybindings/custom-list").contains("jcode-launch-")
+         }
+-        LinuxCompositor::Mate => dconf_list("/org/mate/desktop/keybindings/")
+-            .contains("jcode-launch-"),
++        LinuxCompositor::Mate => {
++            dconf_list("/org/mate/desktop/keybindings/").contains("jcode-launch-")
++        }
+         LinuxCompositor::Xfce => xfce_shortcut_commands_text().contains("/launch_jcode_"),
+         LinuxCompositor::Kde => kde_globalshortcutsrc_path()
+             .and_then(|p| std::fs::read_to_string(p).ok())
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/lib.rs:1664:
+ 
+     for kb in &keybindings {
+         changed |= dconf_write_checked(&format!("{}name", kb.path), &gvariant_string(&kb.name))?;
+-        changed |=
+-            dconf_write_checked(&format!("{}command", kb.path), &gvariant_string(&kb.command))?;
+-        changed |=
+-            dconf_write_checked(&format!("{}binding", kb.path), &gvariant_string(&kb.binding))?;
++        changed |= dconf_write_checked(
++            &format!("{}command", kb.path),
++            &gvariant_string(&kb.command),
++        )?;
++        changed |= dconf_write_checked(
++            &format!("{}binding", kb.path),
++            &gvariant_string(&kb.binding),
++        )?;
+     }
+ 
+     jcode_logging::info(&format!(
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/linux_env.rs:250:
+     parts.push(key);
+     let combo = parts.join("+");
+     let script = bind.script.replace('\\', "\\\\").replace('"', "\\\"");
+-    Some(format!(
+-        "bindsym {combo} exec --no-startup-id \"{script}\""
+-    ))
++    Some(format!("bindsym {combo} exec --no-startup-id \"{script}\""))
+ }
+ 
+ /// Render the full managed block for a flat `#`-commented config. `render_line`
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/linux_env.rs:352:
+ /// The dconf path for jcode's Nth GNOME custom keybinding. Slot-stable so
+ /// re-installs overwrite rather than accumulate.
+ pub(crate) fn gnome_keybinding_path(index: usize) -> String {
+-    format!("/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/jcode-launch-{index}/")
++    format!(
++        "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/jcode-launch-{index}/"
++    )
+ }
+ 
+ /// One GNOME custom keybinding ready to apply via gsettings.
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/linux_env.rs:677:
+     #[test]
+     fn detects_compositors_from_sockets_and_desktop_names() {
+         let cases: Vec<(Vec<(&str, &str)>, Option<LinuxCompositor>)> = vec![
+-            (vec![("NIRI_SOCKET", "/run/niri.sock")], Some(LinuxCompositor::Niri)),
+             (
++                vec![("NIRI_SOCKET", "/run/niri.sock")],
++                Some(LinuxCompositor::Niri),
++            ),
++            (
+                 vec![("HYPRLAND_INSTANCE_SIGNATURE", "abc123")],
+                 Some(LinuxCompositor::Hyprland),
+             ),
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/linux_env.rs:687:
+                 vec![("XDG_CURRENT_DESKTOP", "Hyprland")],
+                 Some(LinuxCompositor::Hyprland),
+             ),
+-            (vec![("SWAYSOCK", "/run/sway.sock")], Some(LinuxCompositor::Sway)),
+-            (vec![("XDG_CURRENT_DESKTOP", "sway")], Some(LinuxCompositor::Sway)),
++            (
++                vec![("SWAYSOCK", "/run/sway.sock")],
++                Some(LinuxCompositor::Sway),
++            ),
++            (
++                vec![("XDG_CURRENT_DESKTOP", "sway")],
++                Some(LinuxCompositor::Sway),
++            ),
+             (vec![("I3SOCK", "/run/i3.sock")], Some(LinuxCompositor::I3)),
+-            (vec![("XDG_SESSION_DESKTOP", "i3")], Some(LinuxCompositor::I3)),
+             (
++                vec![("XDG_SESSION_DESKTOP", "i3")],
++                Some(LinuxCompositor::I3),
++            ),
++            (
+                 vec![("BSPWM_SOCKET", "/tmp/bspwm-socket")],
+                 Some(LinuxCompositor::Bspwm),
+             ),
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/linux_env.rs:700:
+                 vec![("XDG_CURRENT_DESKTOP", "ubuntu:GNOME")],
+                 Some(LinuxCompositor::Gnome),
+             ),
+-            (vec![("XDG_CURRENT_DESKTOP", "GNOME")], Some(LinuxCompositor::Gnome)),
+-            (vec![("XDG_CURRENT_DESKTOP", "KDE")], Some(LinuxCompositor::Kde)),
+-            (vec![("KDE_FULL_SESSION", "true")], Some(LinuxCompositor::Kde)),
++            (
++                vec![("XDG_CURRENT_DESKTOP", "GNOME")],
++                Some(LinuxCompositor::Gnome),
++            ),
++            (
++                vec![("XDG_CURRENT_DESKTOP", "KDE")],
++                Some(LinuxCompositor::Kde),
++            ),
++            (
++                vec![("KDE_FULL_SESSION", "true")],
++                Some(LinuxCompositor::Kde),
++            ),
+             // Mint Cinnamon reports X-Cinnamon.
+             (
+                 vec![("XDG_CURRENT_DESKTOP", "X-Cinnamon")],
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/linux_env.rs:709:
+                 Some(LinuxCompositor::Cinnamon),
+             ),
+-            (vec![("XDG_CURRENT_DESKTOP", "MATE")], Some(LinuxCompositor::Mate)),
+-            (vec![("XDG_CURRENT_DESKTOP", "XFCE")], Some(LinuxCompositor::Xfce)),
++            (
++                vec![("XDG_CURRENT_DESKTOP", "MATE")],
++                Some(LinuxCompositor::Mate),
++            ),
++            (
++                vec![("XDG_CURRENT_DESKTOP", "XFCE")],
++                Some(LinuxCompositor::Xfce),
++            ),
+             // Budgie reports "Budgie:GNOME" and uses GNOME's settings daemon.
+             (
+                 vec![("XDG_CURRENT_DESKTOP", "Budgie:GNOME")],
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/linux_env.rs:754:
+ 
+     #[test]
+     fn gnome_bindings_use_angle_bracket_modifiers_and_stable_slots() {
++        assert_eq!(gnome_binding(&chord("cmd+;")).unwrap(), "<Super>semicolon");
+         assert_eq!(
+-            gnome_binding(&chord("cmd+;")).unwrap(),
+-            "<Super>semicolon"
+-        );
+-        assert_eq!(
+             gnome_binding(&chord("cmd+shift+'")).unwrap(),
+             "<Super><Shift>apostrophe"
+         );
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/linux_env.rs:854:
+         let updated = upsert_kde_shortcut_sections(current, &scs);
+         assert!(updated.contains("[services][firefox.desktop]"));
+         assert!(updated.contains("_launch=Meta+F"));
+-        assert_eq!(updated.matches("[services][jcode-launch-0.desktop]").count(), 1);
++        assert_eq!(
++            updated
++                .matches("[services][jcode-launch-0.desktop]")
++                .count(),
++            1
++        );
+         assert!(updated.contains("_launch=Meta+;"));
+         assert!(!updated.contains("Meta+X"));
+         assert!(!updated.contains("jcode-launch-9"));
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/linux_env.rs:897:
+     #[test]
+     fn sway_bind_line_maps_cmd_to_mod4_and_alt_to_mod1() {
+         let line = render_sway_bind_line(&bind("cmd+;", "/s.sh", "jcode", false)).unwrap();
+-        assert_eq!(line, "bindsym Mod4+semicolon exec --no-startup-id \"/s.sh\"");
++        assert_eq!(
++            line,
++            "bindsym Mod4+semicolon exec --no-startup-id \"/s.sh\""
++        );
+ 
+         let alt = render_sway_bind_line(&bind("alt+shift+[", "/s.sh", "x", false)).unwrap();
+         assert_eq!(
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/linux_env.rs:938:
+     #[test]
+     fn render_returns_none_when_nothing_renderable() {
+         assert!(render_hyprland_block(&[]).is_none());
+-        assert!(
+-            render_hyprland_block(&[bind("cmd+scrolllock", "/a.sh", "a", false)]).is_none()
+-        );
++        assert!(render_hyprland_block(&[bind("cmd+scrolllock", "/a.sh", "a", false)]).is_none());
+     }
+ 
+     #[test]
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/windows_hotkeys.rs:66:
+ /// Translate a canonical jcode key token into a Win32 virtual-key code.
+ fn key_to_vk(key: &str) -> Option<u32> {
+     let vk = match key {
+-        ";" => 0xBA,   // VK_OEM_1
+-        "=" => 0xBB,   // VK_OEM_PLUS
+-        "," => 0xBC,   // VK_OEM_COMMA
+-        "-" => 0xBD,   // VK_OEM_MINUS
+-        "." => 0xBE,   // VK_OEM_PERIOD
+-        "/" => 0xBF,   // VK_OEM_2
+-        "`" => 0xC0,   // VK_OEM_3
+-        "[" => 0xDB,   // VK_OEM_4
+-        "\\" => 0xDC,  // VK_OEM_5
+-        "]" => 0xDD,   // VK_OEM_6
+-        "'" => 0xDE,   // VK_OEM_7
++        ";" => 0xBA,  // VK_OEM_1
++        "=" => 0xBB,  // VK_OEM_PLUS
++        "," => 0xBC,  // VK_OEM_COMMA
++        "-" => 0xBD,  // VK_OEM_MINUS
++        "." => 0xBE,  // VK_OEM_PERIOD
++        "/" => 0xBF,  // VK_OEM_2
++        "`" => 0xC0,  // VK_OEM_3
++        "[" => 0xDB,  // VK_OEM_4
++        "\\" => 0xDC, // VK_OEM_5
++        "]" => 0xDD,  // VK_OEM_6
++        "'" => 0xDE,  // VK_OEM_7
+         "space" => 0x20,
+         "left" => 0x25,
+         "up" => 0x26,
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/windows_hotkeys.rs:364:
+             hk("cmd+;", "$HOME", "home", false),
+         ];
+         let script = render_windows_listener_ps1(&entries, "wt.exe", args_for, "", "").unwrap();
+-        assert!(script.contains("-Id 0x4A01"), "kept entry keeps its slot id");
++        assert!(
++            script.contains("-Id 0x4A01"),
++            "kept entry keeps its slot id"
++        );
+         assert!(!script.contains("-Id 0x4A00"));
+     }
+ 
+Diff in /home/runner/work/jcode/jcode/crates/jcode-setup-hints/src/windows_setup.rs:250:
+         .into_iter()
+         .filter(|hk| windows_hotkeys::chord_to_win32(&hk.chord).is_some())
+         .map(|hk| {
+-            let cwd =
+-                crate::launch_hotkeys::resolve_target_dir(&hk.dir, &last_dir, &last_repo);
++            let cwd = crate::launch_hotkeys::resolve_target_dir(&hk.dir, &last_dir, &last_repo);
+             super::LaunchHotkeyRow {
+                 chord: hk.chord.canonical(),
+                 display: windows_hotkeys::display_windows(&hk.chord),
+Diff in /home/runner/work/jcode/jcode/crates/jcode-telemetry-core/src/lib.rs:143:
+ pub fn record_user_cancelled() {}
+ 
+ #[inline]
+-pub fn record_tool_execution(
+-    _name: &str,
+-    _input: &Value,
+-    _succeeded: bool,
+-    _latency_ms: u64,
+-) {
+-}
++pub fn record_tool_execution(_name: &str, _input: &Value, _succeeded: bool, _latency_ms: u64) {}
+ 
+ #[inline]
+ pub fn end_session(_provider_end: &str, _model_end: &str) {}
+Diff in /home/runner/work/jcode/jcode/crates/jcode-telemetry-core/src/lib.rs:156:
+ 
+ #[inline]
+-pub fn end_session_with_reason(
+-    _provider_end: &str,
+-    _model_end: &str,
+-    _reason: SessionEndReason,
+-) {
+-}
++pub fn end_session_with_reason(_provider_end: &str, _model_end: &str, _reason: SessionEndReason) {}
+ 
+ #[inline]
+ pub fn record_crash(_provider_end: &str, _model_end: &str, _reason: SessionEndReason) {}
+Diff in /home/runner/work/jcode/jcode/crates/jcode-tui/src/tui/app/inline_interactive.rs:144:
+         .filter(|route| route.model == current_model || route_matches(route))
+         .cloned()
+         .collect();
+-    if filtered.is_empty() { routes } else { filtered }
++    if filtered.is_empty() {
++        routes
++    } else {
++        filtered
++    }
+ }
+ 
+ fn model_picker_usage_key(model_name: &str, route: &PickerOption, effort: Option<&str>) -> String {
+Diff in /home/runner/work/jcode/jcode/crates/jcode-tui/src/tui/app/inline_interactive.rs:3539:
+         assert!(!route_supports_reasoning_effort("copilot"));
+         assert!(!route_supports_reasoning_effort("bedrock"));
+         assert!(!route_supports_reasoning_effort("https"));
+-        assert!(!route_supports_reasoning_effort("openai-compatible:llamacpp"));
++        assert!(!route_supports_reasoning_effort(
++            "openai-compatible:llamacpp"
++        ));
+         assert!(!route_supports_reasoning_effort("remote-catalog"));
+         assert!(!route_supports_reasoning_effort("current"));
+     }
+Diff in /home/runner/work/jcode/jcode/crates/jcode-tui/src/tui/app/onboarding_flow_control.rs:398:
+             self.onboarding_import_error = None;
+             self.onboarding_finish();
+             let login = Self::onboarding_login_suggestion();
+-            self.set_status_notice(format!("Onboarding skipped - run {login} when you're ready"));
++            self.set_status_notice(format!(
++                "Onboarding skipped - run {login} when you're ready"
++            ));
+             return true;
+         }
+         match self.onboarding_phase() {
+Diff in /home/runner/work/jcode/jcode/crates/jcode-tui/src/tui/session_picker_tests.rs:859:
+         session_id: session_id.to_string(),
+         pid: std::process::id(),
+         streaming,
+-        streaming_since: streaming.then(|| {
+-            std::time::SystemTime::now() - std::time::Duration::from_secs(90)
+-        }),
++        streaming_since: streaming
++            .then(|| std::time::SystemTime::now() - std::time::Duration::from_secs(90)),
+     }
+ }
+ 
+Diff in /home/runner/work/jcode/jcode/crates/jcode-tui/src/tui/ui_inline_interactive.rs:1065:
+         // fit the widest row (the sample entry: "gpt-5.4 ★" / "openai" / OAuth).
+         let model = display_width(picker_entry_display_name(&picker.entries[0]).as_str())
+             .max(display_width(picker.primary_label()));
+-        let provider = display_width("openai").max(display_width(picker.secondary_label(false))) + 1;
++        let provider =
++            display_width("openai").max(display_width(picker.secondary_label(false))) + 1;
+         let via = display_width(api_method_display("oauth").as_str())
+             .max(display_width(picker.tertiary_label()))
+             + 1;
+Diff in /home/runner/work/jcode/jcode/crates/jcode-tui/src/tui/ui_tools.rs:1090:
+                 .and_then(|v| v.as_str())
+                 .unwrap_or("gmail");
+             let detail = match action {
+-                "search" | "threads" => tool
+-                    .input
+-                    .get("query")
+-                    .and_then(|v| v.as_str())
+-                    .map(|q| {
+-                        format!(
+-                            "'{}'",
+-                            truncate_query_display(q, bounded(40).saturating_sub(2))
+-                        )
+-                    }),
++                "search" | "threads" => tool.input.get("query").and_then(|v| v.as_str()).map(|q| {
++                    format!(
++                        "'{}'",
++                        truncate_query_display(q, bounded(40).saturating_sub(2))
++                    )
++                }),
+                 "read" | "trash" | "modify_labels" => tool
+                     .input
+                     .get("message_id")
+Diff in /home/runner/work/jcode/jcode/crates/jcode-tui/src/tui/ui_tools.rs:1119:
+                         tool.input
+                             .get("subject")
+                             .and_then(|v| v.as_str())
+-                            .map(|s| {
+-                                format!("'{}'", truncate_end_display(s, bounded(30)))
+-                            })
++                            .map(|s| format!("'{}'", truncate_end_display(s, bounded(30))))
+                     }),
+                 "send_draft" => tool
+                     .input
+Diff in /home/runner/work/jcode/jcode/src/cli/startup.rs:120:
+     );
+ }
+ 
+-
+ fn parse_and_prepare_args() -> Result<Args> {
+     let args = Args::parse();
+     startup_profile::mark("args_parse");
+Diff in /home/runner/work/jcode/jcode/src/cli/startup.rs:149:
+ 
+     if update::is_release_build() {
+         std::thread::spawn(move || match update::check_and_maybe_update(auto_update) {
+-            update::UpdateCheckResult::UpdateAvailable { current, latest, .. } => {
++            update::UpdateCheckResult::UpdateAvailable {
++                current, latest, ..
++            } => {
+                 logging::info(&format!("Update available: {} -> {}", current, latest));
+             }
+             update::UpdateCheckResult::UpdateInstalled { version, path } => {
+Diff in /home/runner/work/jcode/jcode/src/cli/startup.rs:160:
+                     .map(|(path, _)| path)
+                     .unwrap_or(path);
+                 let error = crate::platform::replace_process(
+-                    ProcessCommand::new(&exec_path).args(&args).arg("--no-update"),
++                    ProcessCommand::new(&exec_path)
++                        .args(&args)
++                        .arg("--no-update"),
+                 );
+                 eprintln!("Failed to exec new binary: {}", error);
+             }
+Diff in /home/runner/work/jcode/jcode/src/cli/startup.rs:260:
+             crate::provider::external::ANTHROPIC_RUNTIME,
+             crate::provider::external::COPILOT_RUNTIME,
+         ] {
+-            assert!(!crate::provider::external::external_provider_registered(key));
++            assert!(!crate::provider::external::external_provider_registered(
++                key
++            ));
+         }
+     }
+ }
+Diff in /home/runner/work/jcode/jcode/src/lite.rs:242:
+ 
+     #[test]
+     fn lite_provider_choice_accepts_only_openai_and_local() {
+-        assert_eq!(LiteProviderChoice::parse("openai"), Some(LiteProviderChoice::OpenAi));
+-        assert_eq!(LiteProviderChoice::parse("openai-api"), Some(LiteProviderChoice::OpenAiApiKey));
+-        assert_eq!(LiteProviderChoice::parse("ollama"), Some(LiteProviderChoice::Local));
+-        assert_eq!(LiteProviderChoice::parse("lm-studio"), Some(LiteProviderChoice::Local));
+-        assert_eq!(LiteProviderChoice::parse("custom"), Some(LiteProviderChoice::Local));
++        assert_eq!(
++            LiteProviderChoice::parse("openai"),
++            Some(LiteProviderChoice::OpenAi)
++        );
++        assert_eq!(
++            LiteProviderChoice::parse("openai-api"),
++            Some(LiteProviderChoice::OpenAiApiKey)
++        );
++        assert_eq!(
++            LiteProviderChoice::parse("ollama"),
++            Some(LiteProviderChoice::Local)
++        );
++        assert_eq!(
++            LiteProviderChoice::parse("lm-studio"),
++            Some(LiteProviderChoice::Local)
++        );
++        assert_eq!(
++            LiteProviderChoice::parse("custom"),
++            Some(LiteProviderChoice::Local)
++        );
+         assert_eq!(LiteProviderChoice::parse("claude"), None);
+         assert_eq!(LiteProviderChoice::parse("openrouter"), None);
+         assert!(unsupported_legacy_provider_name("bedrock"));
+Diff in /home/runner/work/jcode/jcode/src/lite.rs:305:
+             supports_vision: Some(true),
+             supports_responses: Some(true),
+         };
+-        let discovered = LiteModel::discovered(
+-            "verified-model",
+-            LiteModelSource::OpenAiDiscovery,
+-        );
++        let discovered = LiteModel::discovered("verified-model", LiteModelSource::OpenAiDiscovery);
+         let merged = merge_model_catalogs([built_in.clone()], [discovered]);
+         assert_eq!(merged, vec![built_in]);
+     }
+[1m[92m    Updating[0m crates.io index
+[1m[92m    Updating[0m git repository `https://github.com/1jehuang/agentgrep.git`
+[1m[92m    Updating[0m git repository `https://github.com/1jehuang/mermaid-rs-renderer.git`
+[1m[92m     Locking[0m 769 packages to latest Rust 1.97.0 compatible versions
+[1m[92m      Adding[0m core-graphics v0.23.2 [1m[33m(available: v0.25.0)[0m
+[1m[92m      Adding[0m dirs v5.0.1 [1m[33m(available: v6.0.0)[0m
+[1m[92m      Adding[0m generic-array v0.14.7 [1m[33m(available: v0.14.9)[0m
+[1m[92m      Adding[0m global-hotkey v0.7.0 [1m[33m(available: v0.8.0)[0m
+[1m[92m      Adding[0m glyphon v0.5.0 [1m[33m(available: v0.12.0)[0m
+[1m[92m      Adding[0m liquid v0.26.8 [1m[33m(available: v0.26.11)[0m
+[1m[92m      Adding[0m liquid-core v0.26.8 [1m[33m(available: v0.26.11)[0m
+[1m[92m      Adding[0m liquid-derive v0.26.8 [1m[33m(available: v0.26.10)[0m
+[1m[92m      Adding[0m liquid-lib v0.26.8 [1m[33m(available: v0.26.11)[0m
+[1m[92m      Adding[0m mail-parser v0.9.4 [1m[33m(available: v0.11.5)[0m
+[1m[92m      Adding[0m pdf-extract v0.8.2 [1m[33m(available: v0.12.0)[0m
+[1m[92m      Adding[0m pollster v0.3.0 [1m[33m(available: v1.0.0)[0m
+[1m[92m      Adding[0m pulldown-cmark v0.12.2 [1m[33m(available: v0.13.4)[0m
+[1m[92m      Adding[0m rand v0.9.4 [1m[33m(available: v0.10.2)[0m
+[1m[92m      Adding[0m ratatui-image v10.0.8 [1m[33m(available: v11.0.6)[0m
+[1m[92m      Adding[0m reqwest v0.12.28 [1m[33m(available: v0.13.4)[0m
+[1m[92m      Adding[0m resvg v0.46.0 [1m[33m(available: v0.47.0)[0m
+[1m[92m      Adding[0m sha2 v0.10.9 [1m[33m(available: v0.11.0)[0m
+[1m[92m      Adding[0m similar v2.7.0 [1m[33m(available: v3.1.1)[0m
+[1m[92m      Adding[0m thiserror v1.0.69 [1m[33m(available: v2.0.18)[0m
+[1m[92m      Adding[0m tikv-jemalloc-ctl v0.6.1 [1m[33m(available: v0.7.0)[0m
+[1m[92m      Adding[0m tikv-jemalloc-sys v0.6.1+5.3.0-1-ge13ca993e8ccb9ba9847cc330696e02839f328f7 [1m[33m(available: v0.7.1+5.3.1-0-g81034ce1f1373e37dc865038e1bc8eeecf559ce8)[0m
+[1m[92m      Adding[0m tikv-jemallocator v0.6.1 [1m[33m(available: v0.7.0)[0m
+[1m[92m      Adding[0m tokenizers v0.21.4 [1m[33m(available: v0.23.1)[0m
+[1m[92m      Adding[0m tokio-tungstenite v0.24.0 [1m[33m(available: v0.29.0)[0m
+[1m[92m      Adding[0m toml v0.8.23 [1m[33m(available: v1.1.2+spec-1.1.0)[0m
+[1m[92m      Adding[0m tract-core v0.21.10 [1m[33m(available: v0.21.17)[0m
+[1m[92m      Adding[0m tract-data v0.21.10 [1m[33m(available: v0.21.17)[0m
+[1m[92m      Adding[0m tract-hir v0.21.10 [1m[33m(available: v0.21.17)[0m
+[1m[92m      Adding[0m tract-linalg v0.21.10 [1m[33m(available: v0.21.17)[0m
+[1m[92m      Adding[0m tract-nnef v0.21.10 [1m[33m(available: v0.21.17)[0m
+[1m[92m      Adding[0m tract-onnx v0.21.10 [1m[33m(available: v0.21.17)[0m
+[1m[92m      Adding[0m tract-onnx-opl v0.21.10 [1m[33m(available: v0.21.17)[0m
+[1m[92m      Adding[0m usvg v0.46.0 [1m[33m(available: v0.47.0)[0m
+[1m[92m      Adding[0m wgpu v0.19.4 [1m[33m(available: v30.0.0)[0m
+[1m[92m      Adding[0m whoami v1.6.1 [1m[33m(available: v2.1.2)[0m
+[1m[92m      Adding[0m windows-sys v0.59.0 [1m[33m(available: v0.61.2)[0m
+[1m[92m      Adding[0m winit v0.29.15 [1m[33m(available: v0.30.13)[0m
+[1m[92m Downloading[0m crates ...
+[1m[92m  Downloaded[0m adler2 v2.0.1
+[1m[92m  Downloaded[0m anstream v1.0.0
+[1m[92m  Downloaded[0m atomic-waker v1.1.2
+[1m[92m  Downloaded[0m atomic v0.6.1
+[1m[92m  Downloaded[0m approx v0.5.1
+[1m[92m  Downloaded[0m arrayref v0.3.9
+[1m[92m  Downloaded[0m form_urlencoded v1.2.2
+[1m[92m  Downloaded[0m aliasable v0.1.3
+[1m[92m  Downloaded[0m async-trait v0.1.89
+[1m[92m  Downloaded[0m autocfg v1.5.1
+[1m[92m  Downloaded[0m arrayvec v0.7.8
+[1m[92m  Downloaded[0m clap_lex v1.1.0
+[1m[92m  Downloaded[0m palette_derive v0.7.6
+[1m[92m  Downloaded[0m base64-simd v0.8.0
+[1m[92m  Downloaded[0m allocator-api2 v0.2.21
+[1m[92m  Downloaded[0m arboard v3.6.1
+[1m[92m  Downloaded[0m parking_lot v0.12.5
+[1m[92m  Downloaded[0m parking_lot_core v0.9.12
+[1m[92m  Downloaded[0m block-buffer v0.10.4
+[1m[92m  Downloaded[0m byteorder-lite v0.1.0
+[1m[92m  Downloaded[0m cfg-if v1.0.4
+[1m[92m  Downloaded[0m bitflags v1.3.2
+[1m[92m  Downloaded[0m bit-set v0.5.3
+[1m[92m  Downloaded[0m cpufeatures v0.2.17
+[1m[92m  Downloaded[0m colorchoice v1.0.5
+[1m[92m  Downloaded[0m fixedbitset v0.4.2
+[1m[92m  Downloaded[0m phf_generator v0.11.3
+[1m[92m  Downloaded[0m cpufeatures v0.3.0
+[1m[92m  Downloaded[0m dirs-sys v0.4.1
+[1m[92m  Downloaded[0m by_address v1.2.1
+[1m[92m  Downloaded[0m crypto-common v0.1.7
+[1m[92m  Downloaded[0m errno v0.3.14
+[1m[92m  Downloaded[0m anstyle-query v1.1.5
+[1m[92m  Downloaded[0m float-cmp v0.9.0
+[1m[92m  Downloaded[0m pico-args v0.5.0
+[1m[92m  Downloaded[0m core_maths v0.1.1
+[1m[92m  Downloaded[0m phf_codegen v0.11.3
+[1m[92m  Downloaded[0m cfg_aliases v0.2.1
+[1m[92m  Downloaded[0m phf_shared v0.11.3
+[1m[92m  Downloaded[0m pest_derive v2.8.7
+[1m[92m  Downloaded[0m pest_generator v2.8.7
+[1m[92m  Downloaded[0m phf v0.11.3
+[1m[92m  Downloaded[0m pin-project-lite v0.2.17
+[1m[92m  Downloaded[0m fnv v1.0.7
+[1m[92m  Downloaded[0m darling_macro v0.23.0
+[1m[92m  Downloaded[0m dunce v1.0.5
+[1m[92m  Downloaded[0m phf_macros v0.11.3
+[1m[92m  Downloaded[0m pkg-config v0.3.33
+[1m[92m  Downloaded[0m dirs v5.0.1
+[1m[92m  Downloaded[0m document-features v0.2.12
+[1m[92m  Downloaded[0m equivalent v1.0.2
+[1m[92m  Downloaded[0m filedescriptor v0.8.3
+[1m[92m  Downloaded[0m openssl-probe v0.1.6
+[1m[92m  Downloaded[0m pest_meta v2.8.7
+[1m[92m  Downloaded[0m bufstream v0.1.4
+[1m[92m  Downloaded[0m powerfmt v0.2.0
+[1m[92m  Downloaded[0m rand_chacha v0.3.1
+[1m[92m  Downloaded[0m crossbeam-deque v0.8.7
+[1m[92m  Downloaded[0m data-url v0.3.2
+[1m[92m  Downloaded[0m find-msvc-tools v0.1.9
+[1m[92m  Downloaded[0m proc-macro2-diagnostics v0.10.1
+[1m[92m  Downloaded[0m potential_utf v0.1.5
+[1m[92m  Downloaded[0m wezterm-dynamic v0.2.1
+[1m[92m  Downloaded[0m bit-vec v0.6.3
+[1m[92m  Downloaded[0m byteorder v1.5.0
+[1m[92m  Downloaded[0m cmake v0.1.58
+[1m[92m  Downloaded[0m color_quant v1.1.0
+[1m[92m  Downloaded[0m convert_case v0.10.0
+[1m[92m  Downloaded[0m fast-srgb8 v1.0.0
+[1m[92m  Downloaded[0m fdeflate v0.3.7
+[1m[92m  Downloaded[0m futures-macro v0.3.32
+[1m[92m  Downloaded[0m anstyle-parse v1.0.0
+[1m[92m  Downloaded[0m bincode v1.3.3
+[1m[92m  Downloaded[0m bytemuck_derive v1.10.2
+[1m[92m  Downloaded[0m castaway v0.2.4
+[1m[92m  Downloaded[0m csscolorparser v0.6.2
+[1m[92m  Downloaded[0m data-encoding v2.11.0
+[1m[92m  Downloaded[0m digest v0.10.7
+[1m[92m  Downloaded[0m displaydoc v0.2.6
+[1m[92m  Downloaded[0m email_address v0.2.9
+[1m[92m  Downloaded[0m fastrand v2.4.1
+[1m[92m  Downloaded[0m foldhash v0.2.0
+[1m[92m  Downloaded[0m rand_pcg v0.10.2
+[1m[92m  Downloaded[0m chacha20 v0.10.1
+[1m[92m  Downloaded[0m deranged v0.5.8
+[1m[92m  Downloaded[0m critical-section v1.2.0
+[1m[92m  Downloaded[0m either v1.16.0
+[1m[92m  Downloaded[0m futures-io v0.3.32
+[1m[92m  Downloaded[0m pulldown-cmark-escape v0.11.0
+[1m[92m  Downloaded[0m hex v0.4.3
+[1m[92m  Downloaded[0m zune-core v0.5.1
+[1m[92m  Downloaded[0m anyhow v1.0.103
+[1m[92m  Downloaded[0m email-encoding v0.4.1
+[1m[92m  Downloaded[0m instability v0.3.12
+[1m[92m  Downloaded[0m crc32fast v1.5.0
+[1m[92m  Downloaded[0m crossbeam-utils v0.8.22
+[1m[92m  Downloaded[0m ref-cast-impl v1.0.25
+[1m[92m  Downloaded[0m anstyle v1.0.14
+[1m[92m  Downloaded[0m bytemuck v1.25.0
+[1m[92m  Downloaded[0m clap_derive v4.6.1
+[1m[92m  Downloaded[0m crossbeam-epoch v0.9.20
+[1m[92m  Downloaded[0m darling v0.23.0
+[1m[92m  Downloaded[0m filetime v0.2.29
+[1m[92m  Downloaded[0m fontconfig-parser v0.5.8
+[1m[92m  Downloaded[0m glob v0.3.3
+[1m[92m  Downloaded[0m ordered-float v5.3.0
+[1m[92m  Downloaded[0m aho-corasick v1.1.4
+[1m[92m  Downloaded[0m fax v0.2.7
+[1m[92m  Downloaded[0m imagesize v0.14.0
+[1m[92m  Downloaded[0m ratatui-termina v0.1.0
+[1m[92m  Downloaded[0m percent-encoding v2.3.2
+[1m[92m  Downloaded[0m radium v0.7.0
+[1m[92m  Downloaded[0m ratatui-macros v0.7.2
+[1m[92m  Downloaded[0m rustc-hash v2.1.3
+[1m[92m  Downloaded[0m rustls-connector v0.19.2
+[1m[92m  Downloaded[0m serde_urlencoded v0.7.1
+[1m[92m  Downloaded[0m indoc v2.0.7
+[1m[92m  Downloaded[0m sha1 v0.10.7
+[1m[92m  Downloaded[0m ref-cast v1.0.25
+[1m[92m  Downloaded[0m same-file v1.0.6
+[1m[92m  Downloaded[0m bitflags v2.13.0
+[1m[92m  Downloaded[0m jobserver v0.1.35
+[1m[92m  Downloaded[0m lab v0.11.0
+[1m[92m  Downloaded[0m base64 v0.22.1
+[1m[92m  Downloaded[0m bytes v1.12.1
+[1m[92m  Downloaded[0m clap v4.6.1
+[1m[92m  Downloaded[0m derive_more v2.1.1
+[1m[92m  Downloaded[0m finl_unicode v1.4.0
+[1m[92m  Downloaded[0m line-clipping v0.3.7
+[1m[92m  Downloaded[0m memmem v0.1.1
+[1m[92m  Downloaded[0m num-conv v0.2.2
+[1m[92m  Downloaded[0m num-derive v0.4.2
+[1m[92m  Downloaded[0m yansi v1.0.1
+[1m[92m  Downloaded[0m zerotrie v0.2.4
+[1m[92m  Downloaded[0m cc v1.2.66
+[1m[92m  Downloaded[0m compact_str v0.9.1
+[1m[92m  Downloaded[0m darling_core v0.23.0
+[1m[92m  Downloaded[0m derive_more-impl v2.1.1
+[1m[92m  Downloaded[0m euclid v0.22.14
+[1m[92m  Downloaded[0m fancy-regex v0.11.0
+[1m[92m  Downloaded[0m flate2 v1.1.9
+[1m[92m  Downloaded[0m fontdb v0.23.0
+[1m[92m  Downloaded[0m icu_normalizer v2.2.0
+[1m[92m  Downloaded[0m icu_provider v2.2.0
+[1m[92m  Downloaded[0m memmap2 v0.9.11
+[1m[92m  Downloaded[0m ouroboros_macro v0.18.5
+[1m[92m  Downloaded[0m serde_spanned v0.6.9
+[1m[92m  Downloaded[0m simd-adler32 v0.3.9
+[1m[92m  Downloaded[0m httpdate v1.0.3
+[1m[92m  Downloaded[0m polycool v0.4.0
+[1m[92m  Downloaded[0m ppv-lite86 v0.2.21
+[1m[92m  Downloaded[0m proctitle v0.1.1
+[1m[92m  Downloaded[0m quinn-udp v0.5.15
+[1m[92m  Downloaded[0m quote v1.0.46
+[1m[92m  Downloaded[0m quoted_printable v0.5.2
+[1m[92m  Downloaded[0m rand_chacha v0.9.0
+[1m[92m  Downloaded[0m rand_core v0.10.1
+[1m[92m  Downloaded[0m scopeguard v1.2.0
+[1m[92m  Downloaded[0m stable_deref_trait v1.2.1
+[1m[92m  Downloaded[0m zune-jpeg v0.5.15
+[1m[92m  Downloaded[0m openssl-probe v0.2.1
+[1m[92m  Downloaded[0m tokio-macros v2.7.0
+[1m[92m  Downloaded[0m quick-error v2.0.1
+[1m[92m  Downloaded[0m rustversion v1.0.23
+[1m[92m  Downloaded[0m termios v0.3.3
+[1m[92m  Downloaded[0m tokio-rustls v0.26.4
+[1m[92m  Downloaded[0m tokio-stream v0.1.18
+[1m[92m  Downloaded[0m tokio-tungstenite v0.24.0
+[1m[92m  Downloaded[0m tungstenite v0.24.0
+[1m[92m  Downloaded[0m urlencoding v2.1.3
+[1m[92m  Downloaded[0m memchr v2.8.3
+[1m[92m  Downloaded[0m termina v0.3.3
+[1m[92m  Downloaded[0m clap_builder v4.6.0
+[1m[92m  Downloaded[0m crossterm v0.29.0
+[1m[92m  Downloaded[0m hashbrown v0.16.1
+[1m[92m  Downloaded[0m wezterm-dynamic-derive v0.1.1
+[1m[92m  Downloaded[0m aws-lc-rs v1.17.1
+[1m[92m  Downloaded[0m rand_core v0.6.4
+[1m[92m  Downloaded[0m rustc_version v0.4.1
+[1m[92m  Downloaded[0m rustls-native-certs v0.8.4
+[1m[92m  Downloaded[0m ratatui-termwiz v0.1.2
+[1m[92m  Downloaded[0m rgb v0.8.53
+[1m[92m  Downloaded[0m rustls-pemfile v2.2.0
+[1m[92m  Downloaded[0m rand_core v0.9.5
+[1m[92m  Downloaded[0m ratatui-crossterm v0.1.2
+[1m[92m  Downloaded[0m shlex v2.0.1
+[1m[92m  Downloaded[0m static_assertions v1.1.0
+[1m[92m  Downloaded[0m libm v0.2.16
+[1m[92m  Downloaded[0m url v2.5.8
+[1m[92m  Downloaded[0m winnow v0.7.15
+[1m[92m  Downloaded[0m thiserror v1.0.69
+[1m[92m  Downloaded[0m yoke-derive v0.8.2
+[1m[92m  Downloaded[0m futures-core v0.3.32
+[1m[92m  Downloaded[0m futures-task v0.3.32
+[1m[92m  Downloaded[0m xterm-color v1.0.2
+[1m[92m  Downloaded[0m yoke v0.8.3
+[1m[92m  Downloaded[0m zerofrom v0.1.8
+[1m[92m  Downloaded[0m zerofrom-derive v0.1.7
+[1m[92m  Downloaded[0m zeroize v1.9.0
+[1m[92m  Downloaded[0m bitvec v1.1.1
+[1m[92m  Downloaded[0m chrono v0.4.45
+[1m[92m  Downloaded[0m fs_extra v1.3.0
+[1m[92m  Downloaded[0m funty v2.0.0
+[1m[92m  Downloaded[0m futures-channel v0.3.32
+[1m[92m  Downloaded[0m futures-executor v0.3.32
+[1m[92m  Downloaded[0m futures-sink v0.3.32
+[1m[92m  Downloaded[0m generic-array v0.14.7
+[1m[92m  Downloaded[0m gethostname v1.1.0
+[1m[92m  Downloaded[0m litemap v0.8.2
+[1m[92m  Downloaded[0m litrs v1.0.0
+[1m[92m  Downloaded[0m option-ext v0.2.0
+[1m[92m  Downloaded[0m ordered-float v4.6.0
+[1m[92m  Downloaded[0m signal-hook-registry v1.4.8
+[1m[92m  Downloaded[0m strum_macros v0.28.0
+[1m[92m  Downloaded[0m toml_write v0.1.2
+[1m[92m  Downloaded[0m usvg v0.46.0
+[1m[92m  Downloaded[0m want v0.3.1
+[1m[92m  Downloaded[0m zerovec v0.11.6
+[1m[92m  Downloaded[0m bstr v1.12.3
+[1m[92m  Downloaded[0m futures v0.3.32
+[1m[92m  Downloaded[0m futures-util v0.3.32
+[1m[92m  Downloaded[0m rand_xoshiro v0.7.0
+[1m[92m  Downloaded[0m rustls-native-certs v0.7.3
+[1m[92m  Downloaded[0m rustls-pki-types v1.15.0
+[1m[92m  Downloaded[0m semver v1.0.28
+[1m[92m  Downloaded[0m tap v1.0.1
+[1m[92m  Downloaded[0m tar v0.4.46
+[1m[92m  Downloaded[0m tempfile v3.27.0
+[1m[92m  Downloaded[0m tower-service v0.3.3
+[1m[92m  Downloaded[0m try-lock v0.2.5
+[1m[92m  Downloaded[0m unicode-truncate v2.0.1
+[1m[92m  Downloaded[0m getrandom v0.2.17
+[1m[92m  Downloaded[0m palette v0.7.6
+[1m[92m  Downloaded[0m proc-macro2 v1.0.106
+[1m[92m  Downloaded[0m slab v0.4.12
+[1m[92m  Downloaded[0m strsim v0.11.1
+[1m[92m  Downloaded[0m thiserror v2.0.18
+[1m[92m  Downloaded[0m roxmltree v0.21.1
+[1m[92m  Downloaded[0m wezterm-input-types v0.1.0
+[1m[92m  Downloaded[0m serde_core v1.0.228
+[1m[92m  Downloaded[0m roxmltree v0.20.0
+[1m[92m  Downloaded[0m time-core v0.1.9
+[1m[92m  Downloaded[0m tower-layer v0.3.3
+[1m[92m  Downloaded[0m ipnet v2.12.0
+[1m[92m  Downloaded[0m termwiz v0.23.3
+[1m[92m  Downloaded[0m tracing-core v0.1.36
+[1m[92m  Downloaded[0m walkdir v2.5.0
+[1m[92m  Downloaded[0m gif v0.14.2
+[1m[92m  Downloaded[0m ryu v1.0.23
+[1m[92m  Downloaded[0m serde_derive v1.0.228
+[1m[92m  Downloaded[0m tower v0.5.3
+[1m[92m  Downloaded[0m zerocopy v0.8.54
+[1m[92m  Downloaded[0m httparse v1.10.1
+[1m[92m  Downloaded[0m minimal-lexical v0.2.1
+[1m[92m  Downloaded[0m miniz_oxide v0.8.9
+[1m[92m  Downloaded[0m syn v1.0.109
+[1m[92m  Downloaded[0m tower-http v0.6.11
+[1m[92m  Downloaded[0m x11rb-protocol v0.13.2
+[1m[92m  Downloaded[0m mio v1.2.1
+[1m[92m  Downloaded[0m once_cell v1.21.4
+[1m[92m  Downloaded[0m rayon-core v1.13.0
+[1m[92m  Downloaded[0m time v0.3.53
+[1m[92m  Downloaded[0m ttf-parser v0.25.1
+[1m[92m  Downloaded[0m is-docker v0.2.0
+[1m[92m  Downloaded[0m onig v6.5.3
+[1m[92m  Downloaded[0m qrcode v0.14.1
+[1m[92m  Downloaded[0m quantette v0.5.1
+[1m[92m  Downloaded[0m signal-hook v0.3.18
+[1m[92m  Downloaded[0m serde_yaml v0.9.34+deprecated
+[1m[92m  Downloaded[0m kasuari v0.4.12
+[1m[92m  Downloaded[0m http-body-util v0.1.3
+[1m[92m  Downloaded[0m quinn v0.11.11
+[1m[92m  Downloaded[0m serde v1.0.228
+[1m[92m  Downloaded[0m rand v0.8.6
+[1m[92m  Downloaded[0m rustls-webpki v0.103.13
+[1m[92m  Downloaded[0m safe_arch v0.9.3
+[1m[92m  Downloaded[0m memoffset v0.9.1
+[1m[92m  Downloaded[0m outref v0.5.2
+[1m[92m  Downloaded[0m resvg v0.46.0
+[1m[92m  Downloaded[0m resvg v0.47.0
+[1m[92m  Downloaded[0m slotmap v1.1.1
+[1m[92m  Downloaded[0m globset v0.4.18
+[1m[92m  Downloaded[0m ratatui v0.30.2
+[1m[92m  Downloaded[0m sha2 v0.10.9
+[1m[92m  Downloaded[0m tinyvec_macros v0.1.1
+[1m[92m  Downloaded[0m unicode-bidi-mirroring v0.4.0
+[1m[92m  Downloaded[0m unicode-ccc v0.4.0
+[1m[92m  Downloaded[0m sha1_smol v1.0.1
+[1m[92m  Downloaded[0m unicode-properties v0.1.4
+[1m[92m  Downloaded[0m open v5.3.6
+[1m[92m  Downloaded[0m ouroboros v0.18.5
+[1m[92m  Downloaded[0m tiny-skia-path v0.12.0
+[1m[92m  Downloaded[0m tinystr v0.8.3
+[1m[92m  Downloaded[0m tinyvec v1.11.0
+[1m[92m  Downloaded[0m toml v0.8.23
+[1m[92m  Downloaded[0m toml_datetime v0.6.11
+[1m[92m  Downloaded[0m toml_edit v0.22.27
+[1m[92m  Downloaded[0m tracing v0.1.44
+[1m[92m  Downloaded[0m typenum v1.20.1
+[1m[92m  Downloaded[0m ucd-trie v0.1.7
+[1m[92m  Downloaded[0m unicase v2.9.0
+[1m[92m  Downloaded[0m unicode-bidi v0.3.18
+[1m[92m  Downloaded[0m unicode-ident v1.0.24
+[1m[92m  Downloaded[0m vtparse v0.6.2
+[1m[92m  Downloaded[0m rand v0.9.4
+[1m[92m  Downloaded[0m rand v0.10.2
+[1m[92m  Downloaded[0m utf8parse v0.2.2
+[1m[92m  Downloaded[0m zerocopy-derive v0.8.54
+[1m[92m  Downloaded[0m num_threads v0.1.7
+[1m[92m  Downloaded[0m wezterm-color-types v0.3.0
+[1m[92m  Downloaded[0m zmij v1.0.21
+[1m[92m  Downloaded[0m getrandom v0.4.3
+[1m[92m  Downloaded[0m lru v0.18.1
+[1m[92m  Downloaded[0m mac_address v1.1.8
+[1m[92m  Downloaded[0m png v0.17.16
+[1m[92m  Downloaded[0m signal-hook-mio v0.2.5
+[1m[92m  Downloaded[0m terminal-trx v0.2.6
+[1m[92m  Downloaded[0m tokio v1.52.3
+[1m[92m  Downloaded[0m getopts v0.2.24
+[1m[92m  Downloaded[0m getrandom v0.3.4
+[1m[92m  Downloaded[0m log v0.4.33
+[1m[92m  Downloaded[0m lru-slab v0.1.2
+[1m[92m  Downloaded[0m png v0.18.1
+[1m[92m  Downloaded[0m similar v2.7.0
+[1m[92m  Downloaded[0m smallvec v1.15.2
+[1m[92m  Downloaded[0m socket2 v0.6.4
+[1m[92m  Downloaded[0m terminal-colorsaurus v1.0.3
+[1m[92m  Downloaded[0m unicode-script v0.5.8
+[1m[92m  Downloaded[0m unicode-segmentation v1.13.3
+[1m[92m  Downloaded[0m unicode-vo v0.1.0
+[1m[92m  Downloaded[0m x11rb v0.13.2
+[1m[92m  Downloaded[0m zerovec-derive v0.11.3
+[1m[92m  Downloaded[0m h2 v0.4.15
+[1m[92m  Downloaded[0m heck v0.5.0
+[1m[92m  Downloaded[0m idna_adapter v1.2.2
+[1m[92m  Downloaded[0m pest v2.8.7
+[1m[92m  Downloaded[0m reqwest v0.12.28
+[1m[92m  Downloaded[0m heck v0.4.1
+[1m[92m  Downloaded[0m pulldown-cmark v0.12.2
+[1m[92m  Downloaded[0m serde_json v1.0.150
+[1m[92m  Downloaded[0m siphasher v1.0.3
+[1m[92m  Downloaded[0m utf8_iter v1.0.4
+[1m[92m  Downloaded[0m strum v0.28.0
+[1m[92m  Downloaded[0m subtle v2.6.1
+[1m[92m  Downloaded[0m itoa v1.0.18
+[1m[92m  Downloaded[0m version_check v0.9.5
+[1m[92m  Downloaded[0m simplecss v0.2.2
+[1m[92m  Downloaded[0m strict-num v0.1.1
+[1m[92m  Downloaded[0m untrusted v0.9.0
+[1m[92m  Downloaded[0m utf-8 v0.7.6
+[1m[92m  Downloaded[0m is_terminal_polyfill v1.70.2
+[1m[92m  Downloaded[0m thiserror-impl v2.0.18
+[1m[92m  Downloaded[0m iana-time-zone v0.1.65
+[1m[92m  Downloaded[0m imap-proto v0.16.7
+[1m[92m  Downloaded[0m rayon v1.12.0
+[1m[92m  Downloaded[0m wezterm-blob-leases v0.1.1
+[1m[92m  Downloaded[0m portable-atomic v1.13.1
+[1m[92m  Downloaded[0m regex v1.13.0
+[1m[92m  Downloaded[0m svgtypes v0.16.1
+[1m[92m  Downloaded[0m thiserror-impl v1.0.69
+[1m[92m  Downloaded[0m unsafe-libyaml v0.2.11
+[1m[92m  Downloaded[0m uuid v1.23.4
+[1m[92m  Downloaded[0m writeable v0.6.3
+[1m[92m  Downloaded[0m icu_normalizer_data v2.2.0
+[1m[92m  Downloaded[0m icu_properties v2.2.0
+[1m[92m  Downloaded[0m ignore v0.4.28
+[1m[92m  Downloaded[0m tokio-util v0.7.18
+[1m[92m  Downloaded[0m icu_collections v2.2.0
+[1m[92m  Downloaded[0m icu_locale_core v2.2.0
+[1m[92m  Downloaded[0m idna v1.1.0
+[1m[92m  Downloaded[0m imap v3.0.0-alpha.15
+[1m[92m  Downloaded[0m json5 v1.3.1
+[1m[92m  Downloaded[0m nom v7.1.3
+[1m[92m  Downloaded[0m ratatui-core v0.1.2
+[1m[92m  Downloaded[0m tiff v0.11.3
+[1m[92m  Downloaded[0m indexmap v2.14.0
+[1m[92m  Downloaded[0m rustls-webpki v0.102.8
+[1m[92m  Downloaded[0m half v2.7.1
+[1m[92m  Downloaded[0m http v1.4.2
+[1m[92m  Downloaded[0m hyper-util v0.1.20
+[1m[92m  Downloaded[0m nom v8.0.0
+[1m[92m  Downloaded[0m quinn-proto v0.11.16
+[1m[92m  Downloaded[0m ratatui-widgets v0.3.2
+[1m[92m  Downloaded[0m moxcms v0.8.1
+[1m[92m  Downloaded[0m rustybuzz v0.20.1
+[1m[92m  Downloaded[0m sync_wrapper v1.0.2
+[1m[92m  Downloaded[0m tiny-skia-path v0.11.4
+[1m[92m  Downloaded[0m weezl v0.1.12
+[1m[92m  Downloaded[0m hashbrown v0.17.1
+[1m[92m  Downloaded[0m http-body v1.0.1
+[1m[92m  Downloaded[0m rustls v0.22.4
+[1m[92m  Downloaded[0m wide v0.8.3
+[1m[92m  Downloaded[0m hyper-rustls v0.27.9
+[1m[92m  Downloaded[0m icu_properties_data v2.2.0
+[1m[92m  Downloaded[0m itertools v0.14.0
+[1m[92m  Downloaded[0m webpki-roots v1.0.8
+[1m[92m  Downloaded[0m encoding_rs v0.8.35
+[1m[92m  Downloaded[0m tiny-skia v0.12.0
+[1m[92m  Downloaded[0m unicode-width v0.2.2
+[1m[92m  Downloaded[0m onig_sys v69.9.3
+[1m[92m  Downloaded[0m syn v2.0.118
+[1m[92m  Downloaded[0m image v0.25.10
+[1m[92m  Downloaded[0m image-webp v0.2.4
+[1m[92m  Downloaded[0m lock_api v0.4.14
+[1m[92m  Downloaded[0m mime v0.3.17
+[1m[92m  Downloaded[0m libc v0.2.186
+[1m[92m  Downloaded[0m regex-syntax v0.8.11
+[1m[92m  Downloaded[0m rustix v0.38.44
+[1m[92m  Downloaded[0m rustls v0.23.41
+[1m[92m  Downloaded[0m vsimd v0.8.0
+[1m[92m  Downloaded[0m wyz v0.5.1
+[1m[92m  Downloaded[0m xattr v1.6.1
+[1m[92m  Downloaded[0m is-wsl v0.4.0
+[1m[92m  Downloaded[0m lazy_static v1.5.0
+[1m[92m  Downloaded[0m deltae v0.3.2
+[1m[92m  Downloaded[0m ident_case v1.0.1
+[1m[92m  Downloaded[0m num-traits v0.2.19
+[1m[92m  Downloaded[0m terminfo v0.9.0
+[1m[92m  Downloaded[0m wezterm-bidi v0.2.3
+[1m[92m  Downloaded[0m hyper v1.10.1
+[1m[92m  Downloaded[0m rustix v1.1.4
+[1m[92m  Downloaded[0m xmlwriter v0.1.0
+[1m[92m  Downloaded[0m synstructure v0.13.2
+[1m[92m  Downloaded[0m tiny-skia v0.11.4
+[1m[92m  Downloaded[0m usvg v0.47.0
+[1m[92m  Downloaded[0m kurbo v0.13.1
+[1m[92m  Downloaded[0m lettre v0.11.22
+[1m[92m  Downloaded[0m icy_sixel v0.5.0
+[1m[92m  Downloaded[0m mail-parser v0.9.4
+[1m[92m  Downloaded[0m nix v0.29.0
+[1m[92m  Downloaded[0m regex-automata v0.4.15
+[1m[92m  Downloaded[0m pxfm v0.1.30
+[1m[92m  Downloaded[0m syntect v5.3.0
+[1m[92m  Downloaded[0m ring v0.17.14
+[1m[92m  Downloaded[0m aws-lc-sys v0.42.0
+[1m[92m  Downloaded[0m linux-raw-sys v0.4.15
+[1m[92m  Downloaded[0m linux-raw-sys v0.12.1
+[1m[92m  Downloaded[0m ratatui-image v10.0.8
+[1m[92m   Compiling[0m proc-macro2 v1.0.106
+[1m[92m   Compiling[0m quote v1.0.46
+[1m[92m   Compiling[0m unicode-ident v1.0.24
+[1m[92m   Compiling[0m libc v0.2.186
+[1m[92m    Checking[0m cfg-if v1.0.4
+[1m[92m    Checking[0m memchr v2.8.3
+[1m[92m    Checking[0m log v0.4.33
+[1m[92m   Compiling[0m serde_core v1.0.228
+[1m[92m    Checking[0m itoa v1.0.18
+[1m[92m   Compiling[0m serde v1.0.228
+[1m[92m   Compiling[0m syn v2.0.118
+[1m[92m   Compiling[0m libm v0.2.16
+[1m[92m    Checking[0m bitflags v2.13.0
+[1m[92m   Compiling[0m autocfg v1.5.1
+[1m[92m    Checking[0m smallvec v1.15.2
+[1m[92m   Compiling[0m num-traits v0.2.19
+[1m[92m    Checking[0m errno v0.3.14
+[1m[92m    Checking[0m signal-hook-registry v1.4.8
+[1m[92m    Checking[0m mio v1.2.1
+[1m[92m   Compiling[0m zmij v1.0.21
+[1m[92m   Compiling[0m serde_json v1.0.150
+[1m[92m    Checking[0m futures-core v0.3.32
+[1m[92m   Compiling[0m shlex v2.0.1
+[1m[92m   Compiling[0m version_check v0.9.5
+[1m[92m   Compiling[0m find-msvc-tools v0.1.9
+[1m[92m    Checking[0m allocator-api2 v0.2.21
+[1m[92m    Checking[0m equivalent v1.0.2
+[1m[92m   Compiling[0m jobserver v0.1.35
+[1m[92m    Checking[0m foldhash v0.2.0
+[1m[92m    Checking[0m iana-time-zone v0.1.65
+[1m[92m    Checking[0m hashbrown v0.17.1
+[1m[92m   Compiling[0m cc v1.2.66
+[1m[92m    Checking[0m pin-project-lite v0.2.17
+[1m[92m   Compiling[0m zerocopy v0.8.54
+[1m[92m    Checking[0m bytes v1.12.1
+[1m[92m    Checking[0m once_cell v1.21.4
+[1m[92m   Compiling[0m getrandom v0.3.4
+[1m[92m   Compiling[0m synstructure v0.13.2
+[1m[92m   Compiling[0m pkg-config v0.3.33
+[1m[92m    Checking[0m getrandom v0.2.17
+[1m[92m    Checking[0m socket2 v0.6.4
+[1m[92m   Compiling[0m rustix v1.1.4
+[1m[92m   Compiling[0m anyhow v1.0.103
+[1m[92m    Checking[0m rand_core v0.9.5
+[1m[92m    Checking[0m linux-raw-sys v0.12.1
+[1m[92m    Checking[0m stable_deref_trait v1.2.1
+[1m[92m    Checking[0m ryu v1.0.23
+[1m[92m    Checking[0m zeroize v1.9.0
+[1m[92m   Compiling[0m serde_derive v1.0.228
+[1m[92m   Compiling[0m bytemuck_derive v1.10.2
+[1m[92m   Compiling[0m tokio-macros v2.7.0
+[1m[92m    Checking[0m ppv-lite86 v0.2.21
+[1m[92m    Checking[0m bytemuck v1.25.0
+[1m[92m   Compiling[0m zerofrom-derive v0.1.7
+[1m[92m    Checking[0m tokio v1.52.3
+[1m[92m    Checking[0m zerofrom v0.1.8
+[1m[92m   Compiling[0m yoke-derive v0.8.2
+[1m[92m    Checking[0m chrono v0.4.45
+[1m[92m   Compiling[0m crc32fast v1.5.0
+[1m[92m    Checking[0m simd-adler32 v0.3.9
+[1m[92m    Checking[0m yoke v0.8.3
+[1m[92m    Checking[0m rand_chacha v0.9.0
+[1m[92m    Checking[0m adler2 v2.0.1
+[1m[92m    Checking[0m unicode-width v0.2.2
+[1m[92m    Checking[0m miniz_oxide v0.8.9
+[1m[92m    Checking[0m rand v0.9.4
+[1m[92m    Checking[0m rustls-pki-types v1.15.0
+[1m[92m   Compiling[0m zerovec-derive v0.11.3
+[1m[92m   Compiling[0m ring v0.17.14
+[1m[92m    Checking[0m either v1.16.0
+[1m[92m   Compiling[0m heck v0.5.0
+[1m[92m    Checking[0m base64 v0.22.1
+[1m[92m   Compiling[0m thiserror v2.0.18
+[1m[92m    Checking[0m flate2 v1.1.9
+[1m[92m   Compiling[0m displaydoc v0.2.6
+[1m[92m    Checking[0m zerovec v0.11.6
+[1m[92m   Compiling[0m thiserror-impl v2.0.18
+[1m[92m   Compiling[0m parking_lot_core v0.9.12
+[1m[92m   Compiling[0m cmake v0.1.58
+[1m[92m   Compiling[0m signal-hook v0.3.18
+[1m[92m    Checking[0m static_assertions v1.1.0
+[1m[92m   Compiling[0m unicode-segmentation v1.13.3
+[1m[92m   Compiling[0m dunce v1.0.5
+[1m[92m   Compiling[0m fs_extra v1.3.0
+[1m[92m    Checking[0m futures-sink v0.3.32
+[1m[92m    Checking[0m scopeguard v1.2.0
+[1m[92m   Compiling[0m rustversion v1.0.23
+[1m[92m    Checking[0m lock_api v0.4.14
+[1m[92m   Compiling[0m aws-lc-sys v0.42.0
+[1m[92m   Compiling[0m convert_case v0.10.0
+[1m[92m    Checking[0m untrusted v0.9.0
+[1m[92m    Checking[0m option-ext v0.2.0
+[1m[92m   Compiling[0m ident_case v1.0.1
+[1m[92m   Compiling[0m strsim v0.11.1
+[1m[92m   Compiling[0m derive_more-impl v2.1.1
+[1m[92m   Compiling[0m darling_core v0.23.0
+[1m[92m    Checking[0m dirs-sys v0.4.1
+[1m[92m    Checking[0m parking_lot v0.12.5
+[1m[92m    Checking[0m tinystr v0.8.3
+[1m[92m    Checking[0m fdeflate v0.3.7
+[1m[92m    Checking[0m litemap v0.8.2
+[1m[92m    Checking[0m slab v0.4.12
+[1m[92m    Checking[0m writeable v0.6.3
+[1m[92m   Compiling[0m litrs v1.0.0
+[1m[92m   Compiling[0m document-features v0.2.12
+[1m[92m    Checking[0m icu_locale_core v2.2.0
+[1m[92m   Compiling[0m darling_macro v0.23.0
+[1m[92m    Checking[0m castaway v0.2.4
+[1m[92m    Checking[0m signal-hook-mio v0.2.5
+[1m[92m    Checking[0m dirs v5.0.1
+[1m[92m    Checking[0m derive_more v2.1.1
+[1m[92m    Checking[0m futures-channel v0.3.32
+[1m[92m    Checking[0m zerotrie v0.2.4
+[1m[92m    Checking[0m potential_utf v0.1.5
+[1m[92m   Compiling[0m strum_macros v0.28.0
+[1m[92m    Checking[0m itertools v0.14.0
+[1m[92m    Checking[0m hashbrown v0.16.1
+[1m[92m   Compiling[0m icu_properties_data v2.2.0
+[1m[92m    Checking[0m percent-encoding v2.3.2
+[1m[92m   Compiling[0m aws-lc-rs v1.17.1
+[1m[92m   Compiling[0m icu_normalizer_data v2.2.0
+[1m[92m    Checking[0m utf8_iter v1.0.4
+[1m[92m   Compiling[0m instability v0.3.12
+[1m[92m    Checking[0m unicode-truncate v2.0.1
+[1m[92m    Checking[0m icu_collections v2.2.0
+[1m[92m    Checking[0m strum v0.28.0
+[1m[92m    Checking[0m kasuari v0.4.12
+[1m[92m    Checking[0m icu_provider v2.2.0
+[1m[92m    Checking[0m crossterm v0.29.0
+[1m[92m    Checking[0m compact_str v0.9.1
+[1m[92m   Compiling[0m darling v0.23.0
+[1m[92m   Compiling[0m futures-macro v0.3.32
+[1m[92m    Checking[0m lru v0.18.1
+[1m[92m   Compiling[0m generic-array v0.14.7
+[1m[92m    Checking[0m futures-io v0.3.32
+[1m[92m   Compiling[0m indoc v2.0.7
+[1m[92m    Checking[0m critical-section v1.2.0
+[1m[92m    Checking[0m subtle v2.6.1
+[1m[92m    Checking[0m futures-task v0.3.32
+[1m[92m    Checking[0m ratatui-core v0.1.2
+[1m[92m    Checking[0m futures-util v0.3.32
+[1m[92m    Checking[0m http v1.4.2
+[1m[92m    Checking[0m num_threads v0.1.7
+[1m[92m    Checking[0m time-core v0.1.9
+[1m[92m    Checking[0m byteorder-lite v0.1.0
+[1m[92m    Checking[0m deranged v0.5.8
+[1m[92m    Checking[0m typenum v1.20.1
+[1m[92m    Checking[0m zune-core v0.5.1
+[1m[92m    Checking[0m regex-syntax v0.8.11
+[1m[92m   Compiling[0m crossbeam-utils v0.8.22
+[1m[92m    Checking[0m powerfmt v0.2.0
+[1m[92m    Checking[0m num-conv v0.2.2
+[1m[92m    Checking[0m time v0.3.53
+[1m[92m    Checking[0m zune-jpeg v0.5.15
+[1m[92m    Checking[0m icu_normalizer v2.2.0
+[1m[92m    Checking[0m icu_properties v2.2.0
+[1m[92m    Checking[0m indexmap v2.14.0
+[1m[92m    Checking[0m line-clipping v0.3.7
+[1m[92m    Checking[0m aho-corasick v1.1.4
+[1m[92m   Compiling[0m rustls v0.23.41
+[1m[92m   Compiling[0m crossbeam-epoch v0.9.20
+[1m[92m    Checking[0m idna_adapter v1.2.2
+[1m[92m    Checking[0m ratatui-widgets v0.3.2
+[1m[92m    Checking[0m form_urlencoded v1.2.2
+[1m[92m    Checking[0m png v0.18.1
+[1m[92m    Checking[0m regex-automata v0.4.15
+[1m[92m    Checking[0m jcode-core v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-core)
+[1m[92m   Compiling[0m httparse v1.10.1
+[1m[92m    Checking[0m fnv v1.0.7
+[1m[92m   Compiling[0m crossbeam-deque v0.8.7
+[1m[92m    Checking[0m arrayvec v0.7.8
+[1m[92m    Checking[0m float-cmp v0.9.0
+[1m[92m    Checking[0m strict-num v0.1.1
+[1m[92m    Checking[0m jcode-storage v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-storage)
+[1m[92m    Checking[0m ratatui-macros v0.7.2
+[1m[92m    Checking[0m idna v1.1.0
+[1m[92m    Checking[0m crypto-common v0.1.7
+[1m[92m    Checking[0m block-buffer v0.10.4
+[1m[92m    Checking[0m ratatui-crossterm v0.1.2
+[1m[92m    Checking[0m arrayref v0.3.9
+[1m[92m   Compiling[0m thiserror v1.0.69
+[1m[92m    Checking[0m ratatui v0.30.2
+[1m[92m    Checking[0m url v2.5.8
+[1m[92m    Checking[0m digest v0.10.7
+[1m[92m    Checking[0m http-body v1.0.1
+[1m[92m    Checking[0m jcode-message-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-message-types)
+[1m[92m   Compiling[0m thiserror-impl v1.0.69
+[1m[92m    Checking[0m tracing-core v0.1.36
+[1m[92m   Compiling[0m slotmap v1.1.1
+[1m[92m    Checking[0m core_maths v0.1.1
+[1m[92m    Checking[0m pxfm v0.1.30
+[1m[92m    Checking[0m cpufeatures v0.2.17
+[1m[92m    Checking[0m ttf-parser v0.25.1
+[1m[92m    Checking[0m tracing v0.1.44
+[1m[92m    Checking[0m regex v1.13.0
+[1m[92m    Checking[0m polycool v0.4.0
+[1m[92m    Checking[0m tokio-util v0.7.18
+[1m[92m    Checking[0m rand_core v0.6.4
+[1m[92m    Checking[0m try-lock v0.2.5
+[1m[92m    Checking[0m tinyvec_macros v0.1.1
+[1m[92m    Checking[0m atomic-waker v1.1.2
+[1m[92m    Checking[0m roxmltree v0.20.0
+[1m[92m    Checking[0m tower-service v0.3.3
+[1m[92m    Checking[0m fontconfig-parser v0.5.8
+[1m[92m    Checking[0m h2 v0.4.15
+[1m[92m    Checking[0m tinyvec v1.11.0
+[1m[92m    Checking[0m moxcms v0.8.1
+[1m[92m    Checking[0m want v0.3.1
+[1m[92m    Checking[0m rand_chacha v0.3.1
+[1m[92m    Checking[0m kurbo v0.13.1
+[1m[92m    Checking[0m jcode-logging v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-logging)
+[1m[92m    Checking[0m webpki-roots v1.0.8
+[1m[92m    Checking[0m memmap2 v0.9.11
+[1m[92m    Checking[0m openssl-probe v0.2.1
+[1m[92m    Checking[0m unicode-ccc v0.4.0
+[1m[92m    Checking[0m siphasher v1.0.3
+[1m[92m   Compiling[0m rayon-core v1.13.0
+[1m[92m    Checking[0m utf8parse v0.2.2
+[1m[92m    Checking[0m unicode-script v0.5.8
+[1m[92m    Checking[0m unicode-properties v0.1.4
+[1m[92m    Checking[0m unicode-bidi-mirroring v0.4.0
+[1m[92m    Checking[0m anstyle-parse v1.0.0
+[1m[92m    Checking[0m rustybuzz v0.20.1
+[1m[92m    Checking[0m svgtypes v0.16.1
+[1m[92m    Checking[0m image v0.25.10
+[1m[92m    Checking[0m hyper v1.10.1
+[1m[92m    Checking[0m rustls-native-certs v0.8.4
+[1m[92m    Checking[0m fontdb v0.23.0
+[1m[92m    Checking[0m rand v0.8.6
+[1m[92m   Compiling[0m async-trait v0.1.89
+[1m[92m    Checking[0m sync_wrapper v1.0.2
+[1m[92m    Checking[0m roxmltree v0.21.1
+[1m[92m    Checking[0m simplecss v0.2.2
+[1m[92m    Checking[0m encoding_rs v0.8.35
+[1m[92m    Checking[0m unicode-bidi v0.3.18
+[1m[92m    Checking[0m anstyle v1.0.14
+[1m[92m   Compiling[0m radium v0.7.0
+[1m[92m   Compiling[0m pulldown-cmark v0.12.2
+[1m[92m    Checking[0m mime v0.3.17
+[1m[92m    Checking[0m xmlwriter v0.1.0
+[1m[92m    Checking[0m anstyle-query v1.1.5
+[1m[92m    Checking[0m unicode-vo v0.1.0
+[1m[92m    Checking[0m is_terminal_polyfill v1.70.2
+[1m[92m    Checking[0m data-url v0.3.2
+[1m[92m    Checking[0m imagesize v0.14.0
+[1m[92m    Checking[0m pico-args v0.5.0
+[1m[92m    Checking[0m tower-layer v0.3.3
+[1m[92m    Checking[0m colorchoice v1.0.5
+[1m[92m    Checking[0m ipnet v2.12.0
+[1m[92m    Checking[0m anstream v1.0.0
+[1m[92m    Checking[0m tower v0.5.3
+[1m[92m    Checking[0m hyper-util v0.1.20
+[1m[92m    Checking[0m sha2 v0.10.9
+[1m[92m    Checking[0m getopts v0.2.24
+[1m[92m   Compiling[0m by_address v1.2.1
+[1m[92m    Checking[0m quick-error v2.0.1
+[1m[92m   Compiling[0m getrandom v0.4.3
+[1m[92m   Compiling[0m palette v0.7.6
+[1m[92m    Checking[0m color_quant v1.1.0
+[1m[92m    Checking[0m unicase v2.9.0
+[1m[92m   Compiling[0m ref-cast v1.0.25
+[1m[92m    Checking[0m pulldown-cmark-escape v0.11.0
+[1m[92m    Checking[0m tap v1.0.1
+[1m[92m    Checking[0m weezl v0.1.12
+[1m[92m    Checking[0m clap_lex v1.1.0
+[1m[92m    Checking[0m wyz v0.5.1
+[1m[92m    Checking[0m gif v0.14.2
+[1m[92m    Checking[0m clap_builder v4.6.0
+[1m[92m    Checking[0m image-webp v0.2.4
+[1m[92m   Compiling[0m palette_derive v0.7.6
+[1m[92m    Checking[0m tower-http v0.6.11
+[1m[92m    Checking[0m rayon v1.12.0
+[1m[92m    Checking[0m http-body-util v0.1.3
+[1m[92m    Checking[0m tiny-skia-path v0.11.4
+[1m[92m    Checking[0m tiny-skia-path v0.12.0
+[1m[92m    Checking[0m serde_urlencoded v0.7.1
+[1m[92m    Checking[0m futures-executor v0.3.32
+[1m[92m   Compiling[0m clap_derive v4.6.1
+[1m[92m    Checking[0m safe_arch v0.9.3
+[1m[92m    Checking[0m rgb v0.8.53
+[1m[92m   Compiling[0m ref-cast-impl v1.0.25
+[1m[92m   Compiling[0m proc-macro2-diagnostics v0.10.1
+[1m[92m    Checking[0m same-file v1.0.6
+[1m[92m    Checking[0m bitflags v1.3.2
+[1m[92m    Checking[0m funty v2.0.0
+[1m[92m    Checking[0m fastrand v2.4.1
+[1m[92m    Checking[0m fast-srgb8 v1.0.0
+[1m[92m    Checking[0m bitvec v1.1.1
+[1m[92m    Checking[0m clap v4.6.1
+[1m[92m    Checking[0m png v0.17.16
+[1m[92m    Checking[0m walkdir v2.5.0
+[1m[92m    Checking[0m wide v0.8.3
+[1m[92m    Checking[0m futures v0.3.32
+[1m[92m    Checking[0m jcode-session-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-session-types)
+[1m[92m    Checking[0m serde_spanned v0.6.9
+[1m[92m    Checking[0m jcode-config-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-config-types)
+[1m[92m    Checking[0m toml_datetime v0.6.11
+[1m[92m    Checking[0m rand_xoshiro v0.7.0
+[1m[92m   Compiling[0m onig_sys v69.9.3
+[1m[92m    Checking[0m ordered-float v5.3.0
+[1m[92m   Compiling[0m yansi v1.0.1
+[1m[92m   Compiling[0m rustix v0.38.44
+[1m[92m    Checking[0m toml_write v0.1.2
+[1m[92m    Checking[0m winnow v0.7.15
+[1m[92m   Compiling[0m jcode-build-meta v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-build-meta)
+[1m[92m   Compiling[0m rustls v0.22.4
+[1m[92m    Checking[0m quantette v0.5.1
+[1m[92m    Checking[0m tiny-skia v0.11.4
+[1m[92m    Checking[0m toml_edit v0.22.27
+[1m[92m    Checking[0m tiny-skia v0.12.0
+[1m[92m    Checking[0m usvg v0.47.0
+[1m[92m    Checking[0m usvg v0.46.0
+[1m[92m    Checking[0m jcode-render-core v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-render-core)
+[1m[92m    Checking[0m sha1 v0.10.7
+[1m[92m    Checking[0m rustls-webpki v0.102.8
+[1m[92m    Checking[0m rustls-pemfile v2.2.0
+[1m[92m    Checking[0m jcode-selfdev-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-selfdev-types)
+[1m[92m    Checking[0m jcode-plan v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-plan)
+[1m[92m    Checking[0m jcode-usage-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-usage-types)
+[1m[92m    Checking[0m is-docker v0.2.0
+[1m[92m   Compiling[0m ratatui-image v10.0.8
+[1m[92m    Checking[0m data-encoding v2.11.0
+[1m[92m   Compiling[0m heck v0.4.1
+[1m[92m    Checking[0m utf-8 v0.7.6
+[1m[92m    Checking[0m vsimd v0.8.0
+[1m[92m    Checking[0m ucd-trie v0.1.7
+[1m[92m    Checking[0m outref v0.5.2
+[1m[92m    Checking[0m linux-raw-sys v0.4.15
+[1m[92m    Checking[0m byteorder v1.5.0
+[1m[92m    Checking[0m openssl-probe v0.1.6
+[1m[92m    Checking[0m minimal-lexical v0.2.1
+[1m[92m    Checking[0m rustls-native-certs v0.7.3
+[1m[92m    Checking[0m nom v7.1.3
+[1m[92m    Checking[0m base64-simd v0.8.0
+[1m[92m    Checking[0m json5 v1.3.1
+[1m[92m   Compiling[0m ouroboros_macro v0.18.5
+[1m[92m    Checking[0m is-wsl v0.4.0
+[1m[92m    Checking[0m resvg v0.46.0
+[1m[92m    Checking[0m resvg v0.47.0
+[1m[92m    Checking[0m toml v0.8.23
+[1m[92m    Checking[0m icy_sixel v0.5.0
+[1m[92m    Checking[0m tempfile v3.27.0
+[1m[92m    Checking[0m jcode-agent-runtime v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-agent-runtime)
+[1m[92m    Checking[0m jcode-batch-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-batch-types)
+[1m[92m    Checking[0m jcode-provider-metadata v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-provider-metadata)
+[1m[92m    Checking[0m jcode-terminal-launch v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-terminal-launch)
+[1m[92m    Checking[0m jcode-memory-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-memory-types)
+[1m[92m    Checking[0m jcode-side-panel-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-side-panel-types)
+[1m[92m    Checking[0m jcode-tool-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tool-types)
+[1m[92m    Checking[0m bstr v1.12.3
+[1m[92m    Checking[0m hex v0.4.3
+[1m[92m    Checking[0m sha1_smol v1.0.1
+[1m[92m    Checking[0m aliasable v0.1.3
+[1m[92m    Checking[0m unsafe-libyaml v0.2.11
+[1m[92m   Compiling[0m jcode-tui-mermaid v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-mermaid)
+[1m[92m    Checking[0m urlencoding v2.1.3
+[1m[92m    Checking[0m jcode-import-core v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-import-core)
+[1m[92m    Checking[0m serde_yaml v0.9.34+deprecated
+[1m[92m    Checking[0m ouroboros v0.18.5
+[1m[92m    Checking[0m uuid v1.23.4
+[1m[92m    Checking[0m globset v0.4.18
+[1m[92m    Checking[0m jcode-tool-core v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tool-core)
+[1m[92m    Checking[0m jcode-provider-env v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-provider-env)
+[1m[92m    Checking[0m mermaid-rs-renderer v0.3.1 (https://github.com/1jehuang/mermaid-rs-renderer.git?tag=v0.3.1#2f993bd7)
+[1m[92m    Checking[0m rustls-connector v0.19.2
+[1m[92m    Checking[0m open v5.3.6
+[1m[92m    Checking[0m imap-proto v0.16.7
+[1m[92m    Checking[0m jcode-telemetry-core v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-telemetry-core)
+[1m[92m    Checking[0m jcode-compaction-core v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-compaction-core)
+[1m[92m    Checking[0m jcode-tui-workspace v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-workspace)
+[1m[92m    Checking[0m jcode-terminal-image v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-terminal-image)
+[1m[92m    Checking[0m email-encoding v0.4.1
+[1m[92m    Checking[0m jcode-task-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-task-types)
+[1m[92m    Checking[0m jcode-auth-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-auth-types)
+[1m[92m    Checking[0m onig v6.5.3
+[1m[92m    Checking[0m jcode-gateway-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-gateway-types)
+[1m[92m    Checking[0m bincode v1.3.3
+[1m[92m    Checking[0m jcode-background-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-background-types)
+[1m[92m    Checking[0m proctitle v0.1.1
+[1m[92m    Checking[0m nom v8.0.0
+[1m[92m    Checking[0m bufstream v0.1.4
+[1m[92m    Checking[0m httpdate v1.0.3
+[1m[92m    Checking[0m quoted_printable v0.5.2
+[1m[92m    Checking[0m qrcode v0.14.1
+[1m[92m    Checking[0m lazy_static v1.5.0
+[1m[92m    Checking[0m email_address v0.2.9
+[1m[92m    Checking[0m imap v3.0.0-alpha.15
+[1m[92m    Checking[0m syntect v5.3.0
+[1m[92m    Checking[0m ignore v0.4.28
+[1m[92m    Checking[0m mail-parser v0.9.4
+[1m[92m    Checking[0m jcode-tui-style v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-style)
+[1m[92m    Checking[0m gethostname v1.1.0
+[1m[92m    Checking[0m xattr v1.6.1
+[1m[92m    Checking[0m filetime v0.2.29
+[1m[92m    Checking[0m x11rb-protocol v0.13.2
+[1m[92m    Checking[0m tar v0.4.46
+[1m[92m    Checking[0m agentgrep v0.1.6 (https://github.com/1jehuang/agentgrep.git?tag=v0.1.6#b01b8040)
+[1m[33mwarning[0m[1m: use of deprecated method `ratatui::buffer::Cell::set_skip`: use `set_diff_option(CellDiffOption::Skip)` instead[0m
+   [1m[94m--> [0mcrates/jcode-tui-mermaid/src/mermaid_viewport.rs:297:26
+    [1m[94m|[0m
+[1m[94m297[0m [1m[94m|[0m                     cell.set_skip(false);
+    [1m[94m|[0m                          [1m[33m^^^^^^^^[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mnote[0m: `#[warn(deprecated)]` on by default
 
-*** Please tell me who you are.
+[1m[33mwarning[0m[1m: use of deprecated method `ratatui::buffer::Cell::set_skip`: use `set_diff_option(CellDiffOption::Skip)` instead[0m
+   [1m[94m--> [0mcrates/jcode-tui-mermaid/src/mermaid_viewport.rs:320:26
+    [1m[94m|[0m
+[1m[94m320[0m [1m[94m|[0m                     cell.set_skip(true);
+    [1m[94m|[0m                          [1m[33m^^^^^^^^[0m
 
-Run
+[1m[33mwarning[0m[1m: use of deprecated method `ratatui::buffer::Cell::set_skip`: use `set_diff_option(CellDiffOption::Skip)` instead[0m
+   [1m[94m--> [0mcrates/jcode-tui-mermaid/src/mermaid_viewport.rs:323:26
+    [1m[94m|[0m
+[1m[94m323[0m [1m[94m|[0m                     cell.set_skip(false);
+    [1m[94m|[0m                          [1m[33m^^^^^^^^[0m
 
-  git config --global user.email "you@example.com"
-  git config --global user.name "Your Name"
+[1m[33mwarning[0m: `jcode-tui-mermaid` (lib) generated 3 warnings
+[1m[92m    Checking[0m jcode-tui-markdown v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-markdown)
+[1m[92m    Checking[0m jcode-setup-hints v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-setup-hints)
+[1m[92m    Checking[0m jcode-build-support v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-build-support)
+[1m[92m    Checking[0m jcode-swarm-core v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-swarm-core)
+[1m[92m    Checking[0m jcode-update-core v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-update-core)
+[1m[92m    Checking[0m tokio-stream v0.1.18
+[1m[92m    Checking[0m jcode-ambient-types v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-ambient-types)
+[1m[92m    Checking[0m jcode-overnight-core v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-overnight-core)
+[1m[92m    Checking[0m terminal-trx v0.2.6
+[1m[92m    Checking[0m x11rb v0.13.2
+[1m[92m    Checking[0m similar v2.7.0
+[1m[92m    Checking[0m xterm-color v1.0.2
+[1m[92m    Checking[0m glob v0.3.3
+[1m[92m    Checking[0m terminal-colorsaurus v1.0.3
+[1m[92m    Checking[0m jcode-tui-messages v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-messages)
+[1m[92m    Checking[0m jcode-tui-render v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-render)
+[1m[92m    Checking[0m arboard v3.6.1
+[1m[92m    Checking[0m jcode-tui-core v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-core)
+[1m[92m    Checking[0m jcode-productivity-core v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-productivity-core)
+[1m[92m    Checking[0m jcode-tui-usage-overlay v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-usage-overlay)
+[1m[92m    Checking[0m jcode-tui-session-picker v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-session-picker)
+[1m[92m    Checking[0m jcode-tui-visual-debug v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-visual-debug)
+[1m[92m    Checking[0m jcode-tui-account-picker v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-account-picker)
+[1m[92m    Checking[0m jcode-tui-tool-display v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-tool-display)
+[1m[92m    Checking[0m jcode-tui-anim v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-tui-anim)
+[1m[92m    Checking[0m rustls-webpki v0.103.13
+[1m[92m    Checking[0m tokio-rustls v0.26.4
+[1m[92m    Checking[0m tungstenite v0.24.0
+[1m[92m    Checking[0m hyper-rustls v0.27.9
+[1m[92m    Checking[0m lettre v0.11.22
+[1m[92m    Checking[0m reqwest v0.12.28
+[1m[92m    Checking[0m tokio-tungstenite v0.24.0
+[1m[92m    Checking[0m jcode-notify-email v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-notify-email)
+[1m[92m    Checking[0m jcode-provider-core v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-provider-core)
+[1m[92m    Checking[0m jcode-provider-openai v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-provider-openai)
+[1m[92m    Checking[0m jcode-protocol v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-protocol)
+[1m[92m    Checking[0m jcode-base v0.1.0 (/home/runner/work/jcode/jcode/crates/jcode-base)
+[1m[91merror[E0432][0m[1m: unresolved import `jcode_provider_antigravity`[0m
+  [1m[94m--> [0mcrates/jcode-base/src/provider/antigravity.rs:19:9
+   [1m[94m|[0m
+[1m[94m19[0m [1m[94m|[0m pub use jcode_provider_antigravity::is_known_model;
+   [1m[94m|[0m         [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91muse of unresolved module or unlinked crate `jcode_provider_antigravity`[0m
+   [1m[94m|[0m
+[1m[96mhelp[0m: there is a crate or module with a similar name
+   [1m[94m|[0m
+[1m[94m19[0m [91m- [0mpub use [91mjcode_provider_antigravity[0m::is_known_model;
+[1m[94m19[0m [92m+ [0mpub use [92mjcode_provider_metadata[0m::is_known_model;
+   [1m[94m|[0m
 
-to set your account's default identity.
-Omit --global to set the identity only in this repository.
+[1m[91merror[E0432][0m[1m: unresolved import `jcode_provider_antigravity`[0m
+  [1m[94m--> [0mcrates/jcode-base/src/provider/antigravity.rs:20:9
+   [1m[94m|[0m
+[1m[94m20[0m [1m[94m|[0m pub use jcode_provider_antigravity::{
+   [1m[94m|[0m         [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91muse of unresolved module or unlinked crate `jcode_provider_antigravity`[0m
+   [1m[94m|[0m
+[1m[96mhelp[0m: there is a crate or module with a similar name
+   [1m[94m|[0m
+[1m[94m20[0m [91m- [0mpub use [91mjcode_provider_antigravity[0m::{
+[1m[94m20[0m [92m+ [0mpub use [92mjcode_provider_metadata[0m::{
+   [1m[94m|[0m
 
-fatal: empty ident name (for <runner@runnervm5mmn9.askkogcowbeexaxaijjtd4dtkg.cx.internal.cloudapp.net>) not allowed
+[1m[91merror[E0432][0m[1m: unresolved import `jcode_provider_bedrock`[0m
+ [1m[94m--> [0mcrates/jcode-base/src/provider/bedrock.rs:1:9
+  [1m[94m|[0m
+[1m[94m1[0m [1m[94m|[0m pub use jcode_provider_bedrock::{API_KEY_ENV, BedrockProvider, ENV_FILE, REGION_ENV};
+  [1m[94m|[0m         [1m[91m^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91muse of unresolved module or unlinked crate `jcode_provider_bedrock`[0m
+  [1m[94m|[0m
+[1m[96mhelp[0m: there is a crate or module with a similar name
+  [1m[94m|[0m
+[1m[94m1[0m [91m- [0mpub use [91mjcode_provider_bedrock[0m::{API_KEY_ENV, BedrockProvider, ENV_FILE, REGION_ENV};
+[1m[94m1[0m [92m+ [0mpub use [92mjcode_provider_core[0m::{API_KEY_ENV, BedrockProvider, ENV_FILE, REGION_ENV};
+  [1m[94m|[0m
 
+[1m[91merror[E0432][0m[1m: unresolved import `jcode_provider_copilot`[0m
+  [1m[94m--> [0mcrates/jcode-base/src/provider/copilot.rs:10:9
+   [1m[94m|[0m
+[1m[94m10[0m [1m[94m|[0m pub use jcode_provider_copilot::{DEFAULT_MODEL, FALLBACK_MODELS, is_known_display_model};
+   [1m[94m|[0m         [1m[91m^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91muse of unresolved module or unlinked crate `jcode_provider_copilot`[0m
+   [1m[94m|[0m
+[1m[96mhelp[0m: there is a crate or module with a similar name
+   [1m[94m|[0m
+[1m[94m10[0m [91m- [0mpub use [91mjcode_provider_copilot[0m::{DEFAULT_MODEL, FALLBACK_MODELS, is_known_display_model};
+[1m[94m10[0m [92m+ [0mpub use [92mjcode_provider_core[0m::{DEFAULT_MODEL, FALLBACK_MODELS, is_known_display_model};
+   [1m[94m|[0m
+
+[1m[91merror[E0432][0m[1m: unresolved import `jcode_provider_gemini`[0m
+  [1m[94m--> [0mcrates/jcode-base/src/provider/gemini.rs:10:9
+   [1m[94m|[0m
+[1m[94m10[0m [1m[94m|[0m pub use jcode_provider_gemini::{
+   [1m[94m|[0m         [1m[91m^^^^^^^^^^^^^^^^^^^^^[0m [1m[91muse of unresolved module or unlinked crate `jcode_provider_gemini`[0m
+   [1m[94m|[0m
+[1m[96mhelp[0m: there is a crate or module with a similar name
+   [1m[94m|[0m
+[1m[94m10[0m [91m- [0mpub use [91mjcode_provider_gemini[0m::{
+[1m[94m10[0m [92m+ [0mpub use [92mjcode_provider_env[0m::{
+   [1m[94m|[0m
+
+[1m[91merror[E0432][0m[1m: unresolved import `jcode_provider_openrouter`[0m
+  [1m[94m--> [0mcrates/jcode-base/src/provider/openrouter.rs:21:9
+   [1m[94m|[0m
+[1m[94m21[0m [1m[94m|[0m pub use jcode_provider_openrouter::{
+   [1m[94m|[0m         [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91muse of unresolved module or unlinked crate `jcode_provider_openrouter`[0m
+   [1m[94m|[0m
+[1m[96mhelp[0m: there is a crate or module with a similar name
+   [1m[94m|[0m
+[1m[94m21[0m [91m- [0mpub use [91mjcode_provider_openrouter[0m::{
+[1m[94m21[0m [92m+ [0mpub use [92mjcode_provider_openai[0m::{
+   [1m[94m|[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `openai_compatible_profile_is_configured` in module `crate::provider_catalog`[0m
+   [1m[94m--> [0mcrates/jcode-base/src/auth/mod.rs:420:45
+    [1m[94m|[0m
+[1m[94m420[0m [1m[94m|[0m                 if crate::provider_catalog::openai_compatible_profile_is_configured(profile) {
+    [1m[94m|[0m                                             [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1m[94m|[0m
+   [1m[94m::: [0mcrates/jcode-base/src/provider_catalog.rs:164:1
+    [1m[94m|[0m
+[1m[94m164[0m [1m[94m|[0m pub fn openai_compatible_profile_by_id(id: &str) -> Option<OpenAiCompatibleProfile> {
+    [1m[94m|[0m [1m[94m-----------------------------------------------------------------------------------[0m [1m[94msimilarly named function `openai_compatible_profile_by_id` defined here[0m
+    [1m[94m|[0m
+[1m[96mhelp[0m: a function with a similar name exists
+    [1m[94m|[0m
+[1m[94m420[0m [91m- [0m                if crate::provider_catalog::[91mopenai_compatible_profile_is_configured[0m(profile) {
+[1m[94m420[0m [92m+ [0m                if crate::provider_catalog::[92mopenai_compatible_profile_by_id[0m(profile) {
+    [1m[94m|[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `active_named_provider_profile_credential_source` in module `crate::provider_catalog`[0m
+   [1m[94m--> [0mcrates/jcode-base/src/auth/mod.rs:719:46
+    [1m[94m|[0m
+[1m[94m719[0m [1m[94m|[0m                     crate::provider_catalog::active_named_provider_profile_credential_source()
+    [1m[94m|[0m                                              [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91mnot found in `crate::provider_catalog`[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `openai_compatible_profile_is_configured` in module `crate::provider_catalog`[0m
+   [1m[94m--> [0mcrates/jcode-base/src/provider/catalog_routes.rs:408:38
+    [1m[94m|[0m
+[1m[94m408[0m [1m[94m|[0m         if !crate::provider_catalog::openai_compatible_profile_is_configured(profile) {
+    [1m[94m|[0m                                      [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1m[94m|[0m
+   [1m[94m::: [0mcrates/jcode-base/src/provider_catalog.rs:164:1
+    [1m[94m|[0m
+[1m[94m164[0m [1m[94m|[0m pub fn openai_compatible_profile_by_id(id: &str) -> Option<OpenAiCompatibleProfile> {
+    [1m[94m|[0m [1m[94m-----------------------------------------------------------------------------------[0m [1m[94msimilarly named function `openai_compatible_profile_by_id` defined here[0m
+    [1m[94m|[0m
+[1m[96mhelp[0m: a function with a similar name exists
+    [1m[94m|[0m
+[1m[94m408[0m [91m- [0m        if !crate::provider_catalog::[91mopenai_compatible_profile_is_configured[0m(profile) {
+[1m[94m408[0m [92m+ [0m        if !crate::provider_catalog::[92mopenai_compatible_profile_by_id[0m(profile) {
+    [1m[94m|[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `openai_compatible_profile_id_for_display_name` in module `crate::provider_catalog`[0m
+    [1m[94m--> [0mcrates/jcode-base/src/provider/catalog_routes.rs:1048:34
+     [1m[94m|[0m
+[1m[94m1048[0m [1m[94m|[0m         crate::provider_catalog::openai_compatible_profile_id_for_display_name(provider_name)?;
+     [1m[94m|[0m                                  [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91mnot found in `crate::provider_catalog`[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `openai_compatible_profile_is_configured` in module `crate::provider_catalog`[0m
+    [1m[94m--> [0mcrates/jcode-base/src/provider/catalog_routes.rs:1050:34
+     [1m[94m|[0m
+[1m[94m1050[0m [1m[94m|[0m     if !crate::provider_catalog::openai_compatible_profile_is_configured(profile) {
+     [1m[94m|[0m                                  [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+     [1m[94m|[0m
+    [1m[94m::: [0mcrates/jcode-base/src/provider_catalog.rs:164:1
+     [1m[94m|[0m
+[1m[94m 164[0m [1m[94m|[0m pub fn openai_compatible_profile_by_id(id: &str) -> Option<OpenAiCompatibleProfile> {
+     [1m[94m|[0m [1m[94m-----------------------------------------------------------------------------------[0m [1m[94msimilarly named function `openai_compatible_profile_by_id` defined here[0m
+     [1m[94m|[0m
+[1m[96mhelp[0m: a function with a similar name exists
+     [1m[94m|[0m
+[1m[94m1050[0m [91m- [0m    if !crate::provider_catalog::[91mopenai_compatible_profile_is_configured[0m(profile) {
+[1m[94m1050[0m [92m+ [0m    if !crate::provider_catalog::[92mopenai_compatible_profile_by_id[0m(profile) {
+     [1m[94m|[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `openai_compatible_profile_is_configured` in module `crate::provider_catalog`[0m
+    [1m[94m--> [0mcrates/jcode-base/src/provider/catalog_routes.rs:1076:38
+     [1m[94m|[0m
+[1m[94m1076[0m [1m[94m|[0m         if !crate::provider_catalog::openai_compatible_profile_is_configured(profile) {
+     [1m[94m|[0m                                      [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+     [1m[94m|[0m
+    [1m[94m::: [0mcrates/jcode-base/src/provider_catalog.rs:164:1
+     [1m[94m|[0m
+[1m[94m 164[0m [1m[94m|[0m pub fn openai_compatible_profile_by_id(id: &str) -> Option<OpenAiCompatibleProfile> {
+     [1m[94m|[0m [1m[94m-----------------------------------------------------------------------------------[0m [1m[94msimilarly named function `openai_compatible_profile_by_id` defined here[0m
+     [1m[94m|[0m
+[1m[96mhelp[0m: a function with a similar name exists
+     [1m[94m|[0m
+[1m[94m1076[0m [91m- [0m        if !crate::provider_catalog::[91mopenai_compatible_profile_is_configured[0m(profile) {
+[1m[94m1076[0m [92m+ [0m        if !crate::provider_catalog::[92mopenai_compatible_profile_by_id[0m(profile) {
+     [1m[94m|[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `openai_compatible_profile_static_models` in module `crate::provider_catalog`[0m
+    [1m[94m--> [0mcrates/jcode-base/src/provider/catalog_routes.rs:1135:43
+     [1m[94m|[0m
+[1m[94m1135[0m [1m[94m|[0m     for model in crate::provider_catalog::openai_compatible_profile_static_models(profile) {
+     [1m[94m|[0m                                           [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+     [1m[94m|[0m
+    [1m[94m::: [0mcrates/jcode-base/src/provider_catalog.rs:172:1
+     [1m[94m|[0m
+[1m[94m 172[0m [1m[94m|[0m pub fn openai_compatible_profile_ids() -> HashSet<&'static str> {
+     [1m[94m|[0m [1m[94m---------------------------------------------------------------[0m [1m[94msimilarly named function `openai_compatible_profile_ids` defined here[0m
+     [1m[94m|[0m
+[1m[96mhelp[0m: a function with a similar name exists
+     [1m[94m|[0m
+[1m[94m1135[0m [91m- [0m    for model in crate::provider_catalog::[91mopenai_compatible_profile_static_models[0m(profile) {
+[1m[94m1135[0m [92m+ [0m    for model in crate::provider_catalog::[92mopenai_compatible_profile_ids[0m(profile) {
+     [1m[94m|[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `openai_compatible_profile_is_configured` in module `crate::provider_catalog`[0m
+   [1m[94m--> [0mcrates/jcode-base/src/provider/openrouter.rs:116:41
+    [1m[94m|[0m
+[1m[94m116[0m [1m[94m|[0m             if crate::provider_catalog::openai_compatible_profile_is_configured(*profile) {
+    [1m[94m|[0m                                         [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1m[94m|[0m
+   [1m[94m::: [0mcrates/jcode-base/src/provider_catalog.rs:164:1
+    [1m[94m|[0m
+[1m[94m164[0m [1m[94m|[0m pub fn openai_compatible_profile_by_id(id: &str) -> Option<OpenAiCompatibleProfile> {
+    [1m[94m|[0m [1m[94m-----------------------------------------------------------------------------------[0m [1m[94msimilarly named function `openai_compatible_profile_by_id` defined here[0m
+    [1m[94m|[0m
+[1m[96mhelp[0m: a function with a similar name exists
+    [1m[94m|[0m
+[1m[94m116[0m [91m- [0m            if crate::provider_catalog::[91mopenai_compatible_profile_is_configured[0m(*profile) {
+[1m[94m116[0m [92m+ [0m            if crate::provider_catalog::[92mopenai_compatible_profile_by_id[0m(*profile) {
+    [1m[94m|[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `openai_compatible_profile_id_for_display_name` in module `crate::provider_catalog`[0m
+   [1m[94m--> [0mcrates/jcode-base/src/provider/selection.rs:117:42
+    [1m[94m|[0m
+[1m[94m117[0m [1m[94m|[0m                 crate::provider_catalog::openai_compatible_profile_id_for_display_name(
+    [1m[94m|[0m                                          [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91mnot found in `crate::provider_catalog`[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `openai_compatible_profile_id_for_display_name` in module `crate::provider_catalog`[0m
+   [1m[94m--> [0mcrates/jcode-base/src/provider/selection.rs:136:42
+    [1m[94m|[0m
+[1m[94m136[0m [1m[94m|[0m                 crate::provider_catalog::openai_compatible_profile_id_for_display_name(
+    [1m[94m|[0m                                          [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91mnot found in `crate::provider_catalog`[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `apply_named_provider_profile_env_from_config` in module `crate::provider_catalog`[0m
+  [1m[94m--> [0mcrates/jcode-base/src/provider/startup.rs:81:48
+   [1m[94m|[0m
+[1m[94m81[0m [1m[94m|[0m                 match crate::provider_catalog::apply_named_provider_profile_env_from_config(
+   [1m[94m|[0m                                                [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91mnot found in `crate::provider_catalog`[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `openai_compatible_profile_static_models` in module `crate::provider_catalog`[0m
+   [1m[94m--> [0mcrates/jcode-base/src/provider/mod.rs:173:50
+    [1m[94m|[0m
+[1m[94m173[0m [1m[94m|[0m     let static_models = crate::provider_catalog::openai_compatible_profile_static_models(profile);
+    [1m[94m|[0m                                                  [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1m[94m|[0m
+   [1m[94m::: [0mcrates/jcode-base/src/provider_catalog.rs:172:1
+    [1m[94m|[0m
+[1m[94m172[0m [1m[94m|[0m pub fn openai_compatible_profile_ids() -> HashSet<&'static str> {
+    [1m[94m|[0m [1m[94m---------------------------------------------------------------[0m [1m[94msimilarly named function `openai_compatible_profile_ids` defined here[0m
+    [1m[94m|[0m
+[1m[96mhelp[0m: a function with a similar name exists
+    [1m[94m|[0m
+[1m[94m173[0m [91m- [0m    let static_models = crate::provider_catalog::[91mopenai_compatible_profile_static_models[0m(profile);
+[1m[94m173[0m [92m+ [0m    let static_models = crate::provider_catalog::[92mopenai_compatible_profile_ids[0m(profile);
+    [1m[94m|[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `openai_compatible_profile_model_supports_chat` in module `crate::provider_catalog`[0m
+   [1m[94m--> [0mcrates/jcode-base/src/provider/mod.rs:208:42
+    [1m[94m|[0m
+[1m[94m208[0m [1m[94m|[0m             || !crate::provider_catalog::openai_compatible_profile_model_supports_chat(
+    [1m[94m|[0m                                          [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91mnot found in `crate::provider_catalog`[0m
+
+[1m[91merror[E0425][0m[1m: cannot find function `openai_compatible_profile_is_configured` in module `crate::provider_catalog`[0m
+    [1m[94m--> [0mcrates/jcode-base/src/provider/mod.rs:1125:38
+     [1m[94m|[0m
+[1m[94m1125[0m [1m[94m|[0m         if !crate::provider_catalog::openai_compatible_profile_is_configured(profile) {
+     [1m[94m|[0m                                      [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+     [1m[94m|[0m
+    [1m[94m::: [0mcrates/jcode-base/src/provider_catalog.rs:164:1
+     [1m[94m|[0m
+[1m[94m 164[0m [1m[94m|[0m pub fn openai_compatible_profile_by_id(id: &str) -> Option<OpenAiCompatibleProfile> {
+     [1m[94m|[0m [1m[94m-----------------------------------------------------------------------------------[0m [1m[94msimilarly named function `openai_compatible_profile_by_id` defined here[0m
+     [1m[94m|[0m
+[1m[96mhelp[0m: a function with a similar name exists
+     [1m[94m|[0m
+[1m[94m1125[0m [91m- [0m        if !crate::provider_catalog::[91mopenai_compatible_profile_is_configured[0m(profile) {
+[1m[94m1125[0m [92m+ [0m        if !crate::provider_catalog::[92mopenai_compatible_profile_by_id[0m(profile) {
+     [1m[94m|[0m
+
+[1m[91merror[E0433][0m[1m: cannot find module or crate `jcode_azure_auth` in this scope[0m
+  [1m[94m--> [0mcrates/jcode-base/src/auth/azure.rs:98:5
+   [1m[94m|[0m
+[1m[94m98[0m [1m[94m|[0m     jcode_azure_auth::get_bearer_token(COGNITIVE_SCOPE).await
+   [1m[94m|[0m     [1m[91m^^^^^^^^^^^^^^^^[0m [1m[91muse of unresolved module or unlinked crate `jcode_azure_auth`[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mhelp[0m: if you wanted to use a crate named `jcode_azure_auth`, use `cargo add jcode_azure_auth` to add it to your `Cargo.toml`
+
+[1m[91merror[E0277][0m[1m: the size for values of type `str` cannot be known at compilation time[0m
+   [1m[94m--> [0mcrates/jcode-base/src/auth/mod.rs:718:47
+    [1m[94m|[0m
+[1m[94m718[0m [1m[94m|[0m                 let (source, detail) = if let Some((key_env, env_file)) =
+    [1m[94m|[0m                                               [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91mdoesn't have a size known at compile-time[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mhelp[0m: within `(str, str)`, the trait `Sized` is not implemented for `str`
+    [1m[94m= [0m[1mnote[0m: required because it appears within the type `(str, str)`
+[1m[92mnote[0m: required by a bound in `Some`
+   [1m[94m--> [0m/rustc/2d8144b7880597b6e6d3dfd63a9a9efae3f533d3/library/core/src/option.rs:605:4
+
+[1m[91merror[E0277][0m[1m: the size for values of type `str` cannot be known at compilation time[0m
+   [1m[94m--> [0mcrates/jcode-base/src/auth/mod.rs:723:90
+    [1m[94m|[0m
+[1m[94m723[0m [1m[94m|[0m                         config_source(&key_env, &env_file, format!("~/.config/jcode/{}", env_file)),
+    [1m[94m|[0m                                                                                     [1m[94m--[0m   [1m[91m^^^^^^^^[0m [1m[91mdoesn't have a size known at compile-time[0m
+    [1m[94m|[0m                                                                                     [1m[94m|[0m
+    [1m[94m|[0m                                                                                     [1m[94mrequired by this formatting parameter[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mhelp[0m: the trait `Sized` is not implemented for `str`
+
+[1m[91merror[E0433][0m[1m: cannot find module or crate `jcode_provider_openrouter` in this scope[0m
+    [1m[94m--> [0mcrates/jcode-base/src/provider/catalog_routes.rs:1121:9
+     [1m[94m|[0m
+[1m[94m1121[0m [1m[94m|[0m         jcode_provider_openrouter::load_disk_cache_entry_for_namespace(&resolved.id)
+     [1m[94m|[0m         [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91muse of unresolved module or unlinked crate `jcode_provider_openrouter`[0m
+     [1m[94m|[0m
+[1m[96mhelp[0m: there is a crate or module with a similar name
+     [1m[94m|[0m
+[1m[94m1121[0m [91m- [0m        [91mjcode_provider_openrouter[0m::load_disk_cache_entry_for_namespace(&resolved.id)
+[1m[94m1121[0m [92m+ [0m        [92mjcode_provider_openai[0m::load_disk_cache_entry_for_namespace(&resolved.id)
+     [1m[94m|[0m
+
+[1m[91merror[E0433][0m[1m: cannot find module or crate `jcode_provider_openrouter` in this scope[0m
+  [1m[94m--> [0mcrates/jcode-base/src/provider/openrouter.rs:35:17
+   [1m[94m|[0m
+[1m[94m35[0m [1m[94m|[0m     let cache = jcode_provider_openrouter::load_disk_cache_entry_for_namespace("openrouter")?;
+   [1m[94m|[0m                 [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91muse of unresolved module or unlinked crate `jcode_provider_openrouter`[0m
+   [1m[94m|[0m
+[1m[96mhelp[0m: there is a crate or module with a similar name
+   [1m[94m|[0m
+[1m[94m35[0m [91m- [0m    let cache = [91mjcode_provider_openrouter[0m::load_disk_cache_entry_for_namespace("openrouter")?;
+[1m[94m35[0m [92m+ [0m    let cache = [92mjcode_provider_openai[0m::load_disk_cache_entry_for_namespace("openrouter")?;
+   [1m[94m|[0m
+
+[1m[91merror[E0433][0m[1m: cannot find module or crate `jcode_provider_openrouter` in this scope[0m
+   [1m[94m--> [0mcrates/jcode-base/src/provider/mod.rs:146:17
+    [1m[94m|[0m
+[1m[94m146[0m [1m[94m|[0m     let cache = jcode_provider_openrouter::load_disk_cache_entry_for_namespace(&resolved.id)?;
+    [1m[94m|[0m                 [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91muse of unresolved module or unlinked crate `jcode_provider_openrouter`[0m
+    [1m[94m|[0m
+[1m[96mhelp[0m: there is a crate or module with a similar name
+    [1m[94m|[0m
+[1m[94m146[0m [91m- [0m    let cache = [91mjcode_provider_openrouter[0m::load_disk_cache_entry_for_namespace(&resolved.id)?;
+[1m[94m146[0m [92m+ [0m    let cache = [92mjcode_provider_openai[0m::load_disk_cache_entry_for_namespace(&resolved.id)?;
+    [1m[94m|[0m
+
+[1m[91merror[E0277][0m[1m: the size for values of type `str` cannot be known at compilation time[0m
+   [1m[94m--> [0mcrates/jcode-base/src/provider/mod.rs:206:9
+    [1m[94m|[0m
+[1m[94m206[0m [1m[94m|[0m     for model in models.drain(..) {
+    [1m[94m|[0m         [1m[91m^^^^^[0m [1m[91mdoesn't have a size known at compile-time[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mhelp[0m: the trait `Sized` is not implemented for `str`
+    [1m[94m= [0m[1mnote[0m: all local variables must have a statically known size
+
+[1m[91merror[E0277][0m[1m: the size for values of type `str` cannot be known at compilation time[0m
+   [1m[94m--> [0mcrates/jcode-base/src/provider/mod.rs:206:5
+    [1m[94m|[0m
+[1m[94m206[0m [1m[94m|[0m [1m[91m/[0m     for model in models.drain(..) {
+[1m[94m207[0m [1m[94m|[0m [1m[91m|[0m         if !is_listable_model_name(&model)
+[1m[94m208[0m [1m[94m|[0m [1m[91m|[0m             || !crate::provider_catalog::openai_compatible_profile_model_supports_chat(
+[1m[94m209[0m [1m[94m|[0m [1m[91m|[0m                 &resolved.id,
+[1m[94m...[0m   [1m[91m|[0m
+[1m[94m224[0m [1m[94m|[0m [1m[91m|[0m         });
+[1m[94m225[0m [1m[94m|[0m [1m[91m|[0m     }
+    [1m[94m|[0m [1m[91m|_____^[0m [1m[91mdoesn't have a size known at compile-time[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mhelp[0m: the trait `Sized` is not implemented for `str`
+[1m[92mnote[0m: required by an implicit `Sized` bound in `std::option::Option`
+   [1m[94m--> [0m/rustc/2d8144b7880597b6e6d3dfd63a9a9efae3f533d3/library/core/src/option.rs:597:0
+
+[1m[91merror[E0308][0m[1m: mismatched types[0m
+   [1m[94m--> [0mcrates/jcode-base/src/provider/mod.rs:218:13
+    [1m[94m|[0m
+[1m[94m218[0m [1m[94m|[0m             model,
+    [1m[94m|[0m             [1m[91m^^^^^[0m [1m[91mexpected `String`, found `str`[0m
+    [1m[94m|[0m
+[1m[96mhelp[0m: try using a conversion method
+    [1m[94m|[0m
+[1m[94m218[0m [1m[94m| [0m            [92mmodel: [0mmodel[92m.to_string()[0m,
+    [1m[94m|[0m             [92m++++++[0m      [92m++++++++++++[0m
+
+[1m[91merror[E0433][0m[1m: cannot find module or crate `jcode_provider_openrouter` in this scope[0m
+   [1m[94m--> [0mcrates/jcode-base/src/provider/mod.rs:239:23
+    [1m[94m|[0m
+[1m[94m239[0m [1m[94m|[0m     let Some(cache) = jcode_provider_openrouter::load_disk_cache_entry_for_namespace("openrouter")
+    [1m[94m|[0m                       [1m[91m^^^^^^^^^^^^^^^^^^^^^^^^^[0m [1m[91muse of unresolved module or unlinked crate `jcode_provider_openrouter`[0m
+    [1m[94m|[0m
+[1m[96mhelp[0m: there is a crate or module with a similar name
+    [1m[94m|[0m
+[1m[94m239[0m [91m- [0m    let Some(cache) = [91mjcode_provider_openrouter[0m::load_disk_cache_entry_for_namespace("openrouter")
+[1m[94m239[0m [92m+ [0m    let Some(cache) = [92mjcode_provider_openai[0m::load_disk_cache_entry_for_namespace("openrouter")
+    [1m[94m|[0m
+
+[1m[91merror[E0277][0m[1m: the size for values of type `str` cannot be known at compilation time[0m
+   [1m[94m--> [0mcrates/jcode-base/src/provider/mod.rs:260:15
+    [1m[94m|[0m
+[1m[94m260[0m [1m[94m|[0m         .map(|model| build_openrouter_auto_route(&model, available, String::new()))
+    [1m[94m|[0m               [1m[91m^^^^^[0m [1m[91mdoesn't have a size known at compile-time[0m
+    [1m[94m|[0m
+    [1m[94m= [0m[1mhelp[0m: the trait `Sized` is not implemented for `str`
+    [1m[94m= [0m[1mnote[0m: all function arguments must have a statically known size
+
+[1mSome errors have detailed explanations: E0277, E0308, E0425, E0432, E0433.[0m
+[1mFor more information about an error, try `rustc --explain E0277`.[0m
+[1m[91merror[0m: could not compile `jcode-base` (lib) due to 31 previous errors
