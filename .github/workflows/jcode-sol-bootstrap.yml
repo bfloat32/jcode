@@ -1,34 +1,36 @@
-name: jcode-sol bootstrap
+name: jcode-sol integration and validation
 
 on:
   push:
     branches:
       - jcode-sol
-  pull_request:
-    branches:
-      - jcode-sol-ci-base
   workflow_dispatch:
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
-  group: jcode-sol-bootstrap
-  cancel-in-progress: false
+  group: jcode-sol-integration
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  JCODE_SOL_BASE: c5e7c88324a3b4fd7d09557a042e86cd2a07846d
 
 jobs:
-  refactor-and-validate:
-    if: github.event_name != 'pull_request' || github.head_ref == 'jcode-sol'
+  integrate-and-validate:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
-      - name: Check out solution branch
+      - name: Check out jcode-sol
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: jcode-sol
 
-      - name: Fetch every fork branch and canonical upstream tag
+      - name: Fetch fork branches and canonical upstream
         shell: bash
         run: |
           set -euo pipefail
@@ -36,87 +38,133 @@ jobs:
           git remote add upstream https://github.com/1jehuang/jcode.git 2>/dev/null || \
             git remote set-url upstream https://github.com/1jehuang/jcode.git
           git fetch upstream master --tags --prune
-          test "$(git rev-parse 'v0.40.0^{commit}')" = "c5e7c88324a3b4fd7d09557a042e86cd2a07846d"
-          git merge-base --is-ancestor c5e7c88324a3b4fd7d09557a042e86cd2a07846d HEAD
+          test "$(git rev-parse 'v0.40.0^{commit}')" = "$JCODE_SOL_BASE"
+          git merge-base --is-ancestor "$JCODE_SOL_BASE" HEAD
+          git rev-parse --verify origin/lite
+          git rev-parse --verify origin/syntetic/experimental
 
-          # Mirror canonical tags without making a tag collision block the code build.
-          if ! git push origin --tags; then
-            echo '::warning::One or more pre-existing fork tags differ from upstream; code validation will continue.'
-          fi
+          git push origin --tags || echo '::warning::At least one existing fork tag differs from upstream.'
 
-      - name: Install current stable Rust
+      - name: Install stable Rust
         shell: bash
         run: |
           set -euo pipefail
           rustup toolchain install stable --profile minimal
           rustup default stable
-          rustc --version
-          cargo --version
+          rustc --version | tee /tmp/jcode-sol-validation.log
+          cargo --version | tee -a /tmp/jcode-sol-validation.log
 
-      - name: Apply guarded jcode-sol refactor
+      - name: Integrate lite architecture on v0.40
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/jcode_sol_refactor.py 2>&1 | tee jcode-sol-refactor.log
-          cargo fmt --all 2>&1 | tee -a jcode-sol-refactor.log
-          cargo generate-lockfile 2>&1 | tee -a jcode-sol-refactor.log
+          python3 scripts/jcode_sol_refactor.py 2>&1 | tee -a /tmp/jcode-sol-validation.log
+          cargo fmt --all -- --check 2>&1 | tee -a /tmp/jcode-sol-validation.log || {
+            cargo fmt --all 2>&1 | tee -a /tmp/jcode-sol-validation.log
+          }
+          cargo generate-lockfile 2>&1 | tee -a /tmp/jcode-sol-validation.log
+          cargo metadata --no-deps --format-version 1 >/tmp/jcode-sol-metadata.json
 
-      - name: Capture refactor diagnostics
-        if: always()
-        shell: bash
-        run: |
-          set +e
-          git status --short > jcode-sol-status.txt
-          git diff --stat > jcode-sol-diff-stat.txt
-          git diff > jcode-sol-refactor.patch
-          printf 'HEAD=%s\n' "$(git rev-parse HEAD)" > jcode-sol-run-context.txt
-          printf 'event=%s\n' "${{ github.event_name }}" >> jcode-sol-run-context.txt
-
-      - name: Upload refactor diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jcode-sol-diagnostics-${{ github.run_id }}
-          if-no-files-found: warn
-          retention-days: 7
-          path: |
-            jcode-sol-refactor.log
-            jcode-sol-status.txt
-            jcode-sol-diff-stat.txt
-            jcode-sol-refactor.patch
-            jcode-sol-run-context.txt
-            docs/JCODE_SOL.md
-            docs/JCODE_SOL_BRANCH_REVIEW.md
-
-      - name: Check lean application build
+      - name: Check feature-isolated application builds
         shell: bash
         run: |
           set -euo pipefail
-          cargo check -p jcode --all-targets --no-default-features
+          cargo check -p jcode --all-targets --no-default-features 2>&1 | tee -a /tmp/jcode-sol-validation.log
+          cargo check -p jcode --all-targets --no-default-features --features openai 2>&1 | tee -a /tmp/jcode-sol-validation.log
+          cargo check -p jcode --all-targets --no-default-features --features local 2>&1 | tee -a /tmp/jcode-sol-validation.log
+          cargo check -p jcode --all-targets 2>&1 | tee -a /tmp/jcode-sol-validation.log
 
       - name: Test privacy and provider boundaries
         shell: bash
         run: |
           set -euo pipefail
-          cargo test -p jcode-telemetry-core
-          cargo test -p jcode-provider-metadata
+          cargo test -p jcode-telemetry-core 2>&1 | tee -a /tmp/jcode-sol-validation.log
+          cargo test -p jcode-provider-metadata 2>&1 | tee -a /tmp/jcode-sol-validation.log
+          cargo test -p jcode-provider-local-runtime 2>&1 | tee -a /tmp/jcode-sol-validation.log
 
-      - name: Record validation and publish cohesive result
+      - name: Enforce dependency policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo tree -p jcode --edges normal | tee /tmp/jcode-sol-cargo-tree.txt
+          forbidden='jcode-provider-(anthropic|antigravity|bedrock|claude-cli|copilot|cursor|gemini|openrouter)(-runtime)?|aws-sdk-(bedrockruntime|bedrock)|telemetry-worker'
+          if grep -E "$forbidden" /tmp/jcode-sol-cargo-tree.txt; then
+            echo 'Forbidden hosted-provider or telemetry dependency remains in the default product graph.' | tee -a /tmp/jcode-sol-validation.log
+            exit 1
+          fi
+
+          test ! -e TELEMETRY.md
+          test ! -e telemetry-worker
+          test -e crates/jcode-provider-local-runtime/Cargo.toml
+          grep -F 'default = ["openai", "local"]' Cargo.toml
+          grep -F 'version = "0.40.0"' Cargo.toml
+
+      - name: Publish failure diagnostic
+        if: failure()
+        shell: bash
+        env:
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set +e
+          scratch="$(mktemp -d)"
+          cp /tmp/jcode-sol-validation.log "$scratch/validation.log" 2>/dev/null || \
+            printf 'The workflow failed before the validation log was created.\n' > "$scratch/validation.log"
+          cp /tmp/jcode-sol-cargo-tree.txt "$scratch/cargo-tree.txt" 2>/dev/null || true
+          git status --short > "$scratch/status.txt" 2>/dev/null || true
+          git diff --stat > "$scratch/diff-stat.txt" 2>/dev/null || true
+
+          git reset --hard HEAD
+          git clean -fd
+          mkdir -p docs
+          cp "$scratch/validation.log" docs/JCODE_SOL_BOOTSTRAP_FAILURE.log
+          {
+            echo '# jcode-sol failed validation'
+            echo
+            echo "Workflow: ${RUN_URL}"
+            echo
+            echo '## Working-tree summary'
+            echo '```text'
+            cat "$scratch/status.txt"
+            cat "$scratch/diff-stat.txt"
+            echo '```'
+          } > docs/JCODE_SOL_BOOTSTRAP_FAILURE.md
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/JCODE_SOL_BOOTSTRAP_FAILURE.log docs/JCODE_SOL_BOOTSTRAP_FAILURE.md
+          git commit -m 'ci(jcode-sol): record failed integration diagnostic' || true
+          git push origin HEAD:jcode-sol || true
+
+      - name: Upload failure diagnostic
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jcode-sol-failure-${{ github.run_id }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            docs/JCODE_SOL_BOOTSTRAP_FAILURE.log
+            docs/JCODE_SOL_BOOTSTRAP_FAILURE.md
+
+      - name: Publish validated jcode-sol tree
+        if: success()
         shell: bash
         env:
           RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
+          rm -f docs/JCODE_SOL_BOOTSTRAP_FAILURE.log docs/JCODE_SOL_BOOTSTRAP_FAILURE.md
           cat > docs/JCODE_SOL_VALIDATION.md <<EOF
           # jcode-sol validation
 
-          The guarded transformation completed successfully on GitHub Actions.
+          Validated on GitHub Actions against upstream v0.40.0.
 
-          - Base: upstream v0.40.0 at c5e7c88324a3b4fd7d09557a042e86cd2a07846d
+          - Base: ${JCODE_SOL_BASE}
           - Formatting: cargo fmt --all
           - Lockfile: regenerated by Cargo
-          - Build: cargo check -p jcode --all-targets --no-default-features
-          - Tests: jcode-telemetry-core and jcode-provider-metadata
+          - Builds: no-provider core, OpenAI-only, local-only, OpenAI+local default
+          - Tests: telemetry compatibility, provider metadata, local runtime
+          - Policy: no legacy hosted-provider/AWS Bedrock/telemetry dependency in the default graph
           - Workflow: ${RUN_URL}
           EOF
 
@@ -124,8 +172,8 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           if git diff --cached --quiet; then
-            echo 'No generated changes to publish.'
+            echo 'Validated tree already published.'
           else
-            git commit -m 'refactor(jcode-sol): apply privacy-first OpenAI/local core'
+            git commit -m 'refactor(jcode-sol): apply validated OpenAI/local v0.40 solution'
             git push origin HEAD:jcode-sol
           fi
