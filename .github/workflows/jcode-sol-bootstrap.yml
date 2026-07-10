@@ -76,6 +76,25 @@ jobs:
           if-no-files-found: error
           path: /tmp/jcode-sol-candidate.tar.gz
 
+      - name: Publish CI run marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          marker_dir="$(mktemp -d)"
+          git worktree add --detach "$marker_dir" HEAD
+          (
+            cd "$marker_dir"
+            git checkout --orphan jcode-sol-ci-state
+            git rm -rf . >/dev/null 2>&1 || true
+            mkdir -p docs
+            printf '%s\n' '${{ github.run_id }}' > docs/JCODE_SOL_ACTIVE_RUN
+            printf '%s\n' '${{ github.sha }}' > docs/JCODE_SOL_ACTIVE_SHA
+            git add docs
+            git commit -m 'ci(jcode-sol): publish active run marker'
+            git push --force origin HEAD:refs/heads/jcode-sol-ci-state
+          )
+          git worktree remove --force "$marker_dir"
+
       - name: Check feature-isolated application builds
         shell: bash
         run: |
