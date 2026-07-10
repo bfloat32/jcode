@@ -1,0 +1,26 @@
+rustc 1.97.0 (2d8144b78 2026-07-07)
+cargo 1.97.0 (c980f4866 2026-06-30)
+Traceback (most recent call last):
+  File "/home/runner/work/jcode/jcode/scripts/jcode_sol_refactor.py", line 415, in <module>
+    main()
+  File "/home/runner/work/jcode/jcode/scripts/jcode_sol_refactor.py", line 405, in main
+    integrate_lite_tree()
+  File "/home/runner/work/jcode/jcode/scripts/jcode_sol_refactor.py", line 98, in integrate_lite_tree
+    run("git", "merge", "--squash", "--no-commit", "-X", "theirs", LITE_REF)
+  File "/home/runner/work/jcode/jcode/scripts/jcode_sol_refactor.py", line 39, in run
+    raise RuntimeError(
+RuntimeError: command failed (128): git merge --squash --no-commit -X theirs origin/lite
+Committer identity unknown
+
+*** Please tell me who you are.
+
+Run
+
+  git config --global user.email "you@example.com"
+  git config --global user.name "Your Name"
+
+to set your account's default identity.
+Omit --global to set the identity only in this repository.
+
+fatal: empty ident name (for <runner@runnervm5mmn9.askkogcowbeexaxaijjtd4dtkg.cx.internal.cloudapp.net>) not allowed
+
