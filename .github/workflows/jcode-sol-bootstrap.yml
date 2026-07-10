@@ -57,9 +57,36 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/jcode_sol_refactor.py
-          cargo fmt --all
-          cargo generate-lockfile
+          python3 scripts/jcode_sol_refactor.py 2>&1 | tee jcode-sol-refactor.log
+          cargo fmt --all 2>&1 | tee -a jcode-sol-refactor.log
+          cargo generate-lockfile 2>&1 | tee -a jcode-sol-refactor.log
+
+      - name: Capture refactor diagnostics
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          git status --short > jcode-sol-status.txt
+          git diff --stat > jcode-sol-diff-stat.txt
+          git diff > jcode-sol-refactor.patch
+          printf 'HEAD=%s\n' "$(git rev-parse HEAD)" > jcode-sol-run-context.txt
+          printf 'event=%s\n' "${{ github.event_name }}" >> jcode-sol-run-context.txt
+
+      - name: Upload refactor diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jcode-sol-diagnostics-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            jcode-sol-refactor.log
+            jcode-sol-status.txt
+            jcode-sol-diff-stat.txt
+            jcode-sol-refactor.patch
+            jcode-sol-run-context.txt
+            docs/JCODE_SOL.md
+            docs/JCODE_SOL_BRANCH_REVIEW.md
 
       - name: Check lean application build
         shell: bash
