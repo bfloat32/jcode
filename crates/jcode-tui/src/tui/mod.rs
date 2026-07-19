@@ -1498,7 +1498,6 @@ fn primary_status_spinner_fast_path_available_with_policy(
     state.is_processing()
         && app::run_shell::status_uses_primary_spinner(&state.status())
         && state.streaming_text().is_empty()
-        && !state.centered_mode()
         && !state.has_pending_mouse_scroll_animation()
         && !state.remote_startup_phase_active()
 }
@@ -1508,7 +1507,7 @@ fn primary_status_spinner_needs_full_redraw_with_policy(
     policy: &crate::perf::TuiPerfPolicy,
 ) -> bool {
     // The primary spinner only needs the more expensive full-redraw cadence when
-    // the cheap single-cell fast path cannot run (e.g. centered composer). When
+    // the cheap single-cell fast path cannot run (for example during streaming). When
     // the fast path is available we keep full redraws at the slow passive-liveness
     // rate and let the one-cell renderer animate the spinner.
     state.is_processing()

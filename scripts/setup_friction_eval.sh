@@ -59,8 +59,7 @@ check() { # check <name> <expected-desc> <actual-desc> <condition-exit-status>
 }
 
 # ---------------------------------------------------------------------------
-# Sandbox: mocked release endpoint + tools, identical shape to
-# test_install_conversion.sh so both exercise the same installer code paths.
+# Sandbox: mocked release endpoint and tools that exercise installer code paths.
 # ---------------------------------------------------------------------------
 mkdir -p "$work/bin"
 
@@ -86,11 +85,6 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 case "$url" in
-  *telemetry.jcode.sh*) ;;
-  *jcode.sh/releases/latest/version) printf 'v%s\n' "${EVAL_VERSION:-1.2.3}" ;;
-  *jcode.sh/releases/v*/download-bases)
-    printf 'https://github.com/1jehuang/jcode/releases/download/v%s\n' "${EVAL_VERSION:-1.2.3}"
-    ;;
   *SHA256SUMS)
     # Checksum of the deterministic fake archive written by the tar mock's
     # sibling below (the literal bytes "fake archive").
@@ -98,7 +92,7 @@ case "$url" in
       "${EVAL_CHECKSUM_ASSET:-jcode-linux-x86_64.tar.gz}"
     ;;
   *github.com*/releases/latest)
-    printf 'https://github.com/1jehuang/jcode/releases/tag/v%s' "${EVAL_VERSION:-1.2.3}"
+    printf 'https://github.com/bfloat32/jcode/releases/tag/v%s' "${EVAL_VERSION:-1.2.3}"
     ;;
   *github.com*/releases/download/*)
     [ -n "$output" ] || exit 2

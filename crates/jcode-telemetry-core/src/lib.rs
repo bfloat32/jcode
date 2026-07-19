@@ -22,7 +22,9 @@ use std::sync::mpsc::{SyncSender, TrySendError, sync_channel};
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
-const TELEMETRY_ENDPOINT: &str = "https://telemetry.jcode.sh/v1/event";
+// Deliberately unset. Delivery is hard-disabled and this fork must not retain
+// an author-controlled telemetry destination as a latent default.
+const TELEMETRY_ENDPOINT: &str = "";
 // Experimental privacy policy: keep the telemetry API as a no-op-compatible
 // seam so upstream syncs remain small, but never collect, persist, or transmit
 // usage, lifecycle, crash, discovery, or author telemetry in this build.
@@ -32,7 +34,8 @@ const BACKGROUND_QUEUE_CAPACITY: usize = 2048;
 const BLOCKING_INSTALL_TIMEOUT: Duration = Duration::from_millis(1200);
 const BLOCKING_LIFECYCLE_TIMEOUT: Duration = Duration::from_millis(800);
 const TELEMETRY_SCHEMA_VERSION: u32 = 6;
-const DEFAULT_DISCOVERY_ENDPOINT: &str = "https://api.jcode.sh/v1/discovery";
+// Partner discovery requires an explicit, trusted endpoint in user config.
+const DEFAULT_DISCOVERY_ENDPOINT: &str = "";
 static TELEMETRY_PERMANENTLY_REJECTED: AtomicBool = AtomicBool::new(false);
 static TELEMETRY_QUEUE_OVERFLOW_WARNED: AtomicBool = AtomicBool::new(false);
 static TELEMETRY_BACKGROUND_SENDER: OnceLock<SyncSender<Value>> = OnceLock::new();
@@ -1052,6 +1055,13 @@ fn background_sender() -> &'static SyncSender<Value> {
 }
 
 fn send_payload(payload: serde_json::Value, mode: DeliveryMode) -> bool {
+    // Keep the privacy default enforced at the transport boundary as well as
+    // at public call sites. This prevents a future caller from accidentally
+    // reviving delivery by bypassing a higher-level guard.
+    if !is_enabled() {
+        return false;
+    }
+
     match mode {
         DeliveryMode::Background => {
             if TELEMETRY_PERMANENTLY_REJECTED.load(Ordering::Relaxed) {

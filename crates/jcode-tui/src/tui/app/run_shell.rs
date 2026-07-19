@@ -74,7 +74,6 @@ pub(super) fn status_spinner_only_symbol(app: &App) -> Option<&'static str> {
     // rate; otherwise it uses the full-rate spinner clock.
     if !app.is_processing
         || !app.streaming.streaming_text.is_empty()
-        || app.centered_mode()
         || app.has_pending_mouse_scroll_animation()
         || app.remote_startup_phase_active()
     {
@@ -95,7 +94,8 @@ pub(super) fn status_spinner_only_symbol(app: &App) -> Option<&'static str> {
 /// Statuses whose full status line starts with the primary green circular spinner.
 ///
 /// Keep this in sync with `ui_input::draw_status`: these statuses can be safely
-/// refreshed by the one-cell spinner fast path when the status line is left aligned.
+/// refreshed by the one-cell spinner fast path. The renderer records the exact
+/// spinner cell for both left-aligned and centered status lines.
 /// Tool execution uses its own full-line activity indicator, and network waits use
 /// a static amber retry marker, so neither belongs here.
 pub(crate) fn status_uses_primary_spinner(status: &ProcessingStatus) -> bool {
@@ -264,9 +264,9 @@ impl StatusSpinnerRenderer {
         let Some(previous_frame) = self.last_frame.as_ref() else {
             return Ok(false);
         };
-        let status_area = crate::tui::ui::last_status_area();
+        let spinner_cell = crate::tui::ui::last_primary_status_spinner_cell();
         let status_patchable = status_symbol
-            .zip(status_area)
+            .zip(spinner_cell)
             .is_some_and(|(symbol, area)| {
                 render_status_spinner_into_buffer(previous_frame, area, symbol)
             });
@@ -277,7 +277,7 @@ impl StatusSpinnerRenderer {
         let next_frame = {
             let current_buffer = terminal.current_buffer_mut();
             current_buffer.clone_from(previous_frame);
-            if let Some((symbol, area)) = status_symbol.zip(status_area)
+            if let Some((symbol, area)) = status_symbol.zip(spinner_cell)
                 && status_patchable
             {
                 render_status_spinner_into_buffer_mut(current_buffer, area, symbol);
@@ -878,5 +878,19 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn primary_spinner_cell_tracks_centered_status_text() {
+        let area = Rect::new(10, 4, 40, 1);
+        assert_eq!(
+            crate::tui::ui::primary_status_spinner_cell(area, 12, true),
+            Some(Rect::new(24, 4, 1, 1)),
+            "the partial redraw must target the first cell of the centered line"
+        );
+        assert_eq!(
+            crate::tui::ui::primary_status_spinner_cell(area, 12, false),
+            Some(Rect::new(10, 4, 1, 1))
+        );
     }
 }

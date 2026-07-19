@@ -336,8 +336,11 @@ fn spawn_background_update_check(args: &Args) {
     }
 }
 
+const BACKGROUND_UPDATE_CHECK_ENABLED: bool = false;
+
 fn should_spawn_background_update_check(args: &Args) -> bool {
-    !args.quiet
+    BACKGROUND_UPDATE_CHECK_ENABLED
+        && !args.quiet
         && !args.no_update
         && !matches!(
             args.command,
@@ -411,6 +414,12 @@ mod tests {
         assert!(matches!(args.command, Some(Command::Update)));
         assert!(!should_spawn_background_update_check(&args));
         assert!(should_auto_install_update(&args));
+    }
+
+    #[test]
+    fn background_update_checks_are_disabled_by_default() {
+        let args = parse_args(&["jcode"]);
+        assert!(!should_spawn_background_update_check(&args));
     }
 
     #[test]

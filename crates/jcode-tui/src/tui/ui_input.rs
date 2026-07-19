@@ -1007,6 +1007,20 @@ pub(super) fn draw_status(frame: &mut Frame, app: &dyn TuiState, area: Rect, pen
 
     crate::memory::check_staleness();
 
+    let primary_spinner_cell = if app.is_processing()
+        && matches!(
+            app.status(),
+            ProcessingStatus::Sending
+                | ProcessingStatus::Connecting(_)
+                | ProcessingStatus::Thinking(_)
+                | ProcessingStatus::Streaming
+        ) {
+        super::primary_status_spinner_cell(area, line.width(), app.centered_mode())
+    } else {
+        None
+    };
+    super::record_primary_status_spinner_cell(primary_spinner_cell);
+
     if app.centered_mode() {
         frame.render_widget(Paragraph::new(line.alignment(Alignment::Center)), area);
         return;

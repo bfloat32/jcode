@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="1jehuang/jcode"
-RELEASE_METADATA_BASE="${JCODE_RELEASE_METADATA_BASE:-https://jcode.sh/releases}"
+REPO="bfloat32/jcode"
+# Use GitHub releases for this fork. A metadata mirror can only be used when a
+# user explicitly configures one, preventing the installer from contacting the
+# original project's hosted service.
+RELEASE_METADATA_BASE="${JCODE_RELEASE_METADATA_BASE:-}"
 IS_WINDOWS=false
 IS_TERMUX=false
 INSTALL_STAGE="startup"
-INSTALL_SUCCEEDED=0
 INSTALL_OS="unknown"
 INSTALL_ARCH="unknown"
 INSTALL_VERSION="unknown"
@@ -32,57 +34,11 @@ sha256_file() {
   fi
 }
 
-valid_conversion_id() {
-  printf '%s' "${JCODE_INSTALL_CONVERSION_ID:-}" |
-    grep -Eiq '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-}
-
-telemetry_value() {
-  printf '%s' "$1" | tr -cd '[:alnum:]_. -' | cut -c1-100
-}
-
-report_install_funnel() {
-  stage="$1"
-  outcome="$2"
-  failure_stage="${3:-}"
-  [ "${JCODE_NO_TELEMETRY:-}" != "1" ] || return 0
-  [ "${DO_NOT_TRACK:-}" != "1" ] || return 0
-  valid_conversion_id || return 0
-
-  payload=$(printf '{"id":"%s","event":"install_funnel","version":"%s","os":"%s","arch":"%s","conversion_id":"%s","stage":"%s","outcome":"%s","source":"installer","install_method":"shell","failure_stage":"%s"}' \
-    "$JCODE_INSTALL_CONVERSION_ID" \
-    "$(telemetry_value "$INSTALL_VERSION")" \
-    "$(telemetry_value "$INSTALL_OS")" \
-    "$(telemetry_value "$INSTALL_ARCH")" \
-    "$JCODE_INSTALL_CONVERSION_ID" \
-    "$(telemetry_value "$stage")" \
-    "$(telemetry_value "$outcome")" \
-    "$(telemetry_value "$failure_stage")")
-  curl -fsS --max-time 2 -H 'Content-Type: application/json' \
-    --data "$payload" https://telemetry.jcode.sh/v1/event >/dev/null 2>&1 || true
-}
-
-persist_install_conversion_id() {
-  [ "${JCODE_NO_TELEMETRY:-}" != "1" ] || return 0
-  [ "${DO_NOT_TRACK:-}" != "1" ] || return 0
-  valid_conversion_id || return 0
-  jcode_home="${JCODE_HOME:-$HOME/.jcode}"
-  mkdir -p "$jcode_home" 2>/dev/null || return 0
-  (umask 077; printf '%s\n' "$JCODE_INSTALL_CONVERSION_ID" > "$jcode_home/install_conversion_id") \
-    2>/dev/null || return 0
-  chmod 600 "$jcode_home/install_conversion_id" 2>/dev/null || true
-}
-
 install_exit() {
   status=$?
   trap - EXIT
   set +e
   [ -z "$tmpdir" ] || rm -rf "$tmpdir"
-  if [ "$INSTALL_SUCCEEDED" = "1" ] && [ "$status" = "0" ]; then
-    report_install_funnel "installer_finish" "success" ""
-  else
-    report_install_funnel "installer_finish" "failure" "$INSTALL_STAGE"
-  fi
   exit "$status"
 }
 trap install_exit EXIT
@@ -96,7 +52,6 @@ INSTALL_ARCH="$ARCH"
 if [ -n "${TERMUX_VERSION:-}" ] || [ "${PREFIX:-}" = "/data/data/com.termux/files/usr" ] || [ -d "/data/data/com.termux/files/usr" ]; then
   IS_TERMUX=true
 fi
-
 case "$OS" in
   Linux)
     case "$ARCH" in
@@ -140,8 +95,6 @@ case "$OS" in
     ;;
 esac
 
-report_install_funnel "installer_start" "success" ""
-
 if [ "$IS_WINDOWS" = true ]; then
   INSTALL_DIR="${JCODE_INSTALL_DIR:-$LOCALAPPDATA/jcode/bin}"
 else
@@ -149,14 +102,16 @@ else
 fi
 
 # Prefer GitHub's stable redirect when it is reachable so publication changes
-# are visible immediately. jcode.sh keeps a static copy of the latest published
-# tag as an independent fallback for GitHub outages, blocks, and shared-network
-# throttling. Neither path uses the rate-limited unauthenticated GitHub API.
+# are visible immediately. An explicitly configured metadata mirror remains
+# available for environments that need one.
 INSTALL_STAGE="release_lookup"
 VERSION="${JCODE_VERSION:-}"
 if [ -z "$VERSION" ]; then
-  METADATA_VERSION=$(curl -fsSL --retry 2 --connect-timeout 10 \
-    "$RELEASE_METADATA_BASE/latest/version" 2>/dev/null | tr -d '\r\n' || true)
+  METADATA_VERSION=""
+  if [ -n "$RELEASE_METADATA_BASE" ]; then
+    METADATA_VERSION=$(curl -fsSL --retry 2 --connect-timeout 10 \
+      "$RELEASE_METADATA_BASE/latest/version" 2>/dev/null | tr -d '\r\n' || true)
+  fi
   LATEST_RELEASE_URL=$(curl -fsSIL --retry 2 --connect-timeout 10 \
     -o /dev/null -w '%{url_effective}' "https://github.com/$REPO/releases/latest" 2>/dev/null || true)
   case "$LATEST_RELEASE_URL" in
@@ -167,7 +122,7 @@ if [ -z "$VERSION" ]; then
     VERSION="$GITHUB_VERSION"
   elif valid_release_tag "$METADATA_VERSION"; then
     VERSION="$METADATA_VERSION"
-    info "GitHub release lookup unavailable; using cached jcode.sh metadata ($VERSION)."
+    info "GitHub release lookup unavailable; using configured release metadata ($VERSION)."
   fi
 fi
 valid_release_tag "$VERSION" || err "Failed to determine latest version"
@@ -208,8 +163,11 @@ tmpdir=$(mktemp -d)
 INSTALL_STAGE="artifact_download"
 download_mode=""
 downloaded_asset=""
-DOWNLOAD_BASES=$(curl -fsSL --retry 2 --connect-timeout 10 \
-  "$RELEASE_METADATA_BASE/$VERSION/download-bases" 2>/dev/null || true)
+DOWNLOAD_BASES=""
+if [ -n "$RELEASE_METADATA_BASE" ]; then
+  DOWNLOAD_BASES=$(curl -fsSL --retry 2 --connect-timeout 10 \
+    "$RELEASE_METADATA_BASE/$VERSION/download-bases" 2>/dev/null || true)
+fi
 DOWNLOAD_BASES=$(printf '%s\n%s\n' "$DOWNLOAD_BASES" "$GITHUB_RELEASE_BASE" |
   awk '/^https:\/\/[^[:space:]]+$/ && !seen[$0]++')
 
@@ -233,9 +191,12 @@ done
 if [ -n "$download_mode" ]; then
   INSTALL_STAGE="artifact_verification"
   EXPECTED_SHA256=""
-  for checksum_url in \
-    "$RELEASE_METADATA_BASE/$VERSION/SHA256SUMS" \
-    "$GITHUB_RELEASE_BASE/SHA256SUMS"; do
+  checksum_urls="$GITHUB_RELEASE_BASE/SHA256SUMS"
+  if [ -n "$RELEASE_METADATA_BASE" ]; then
+    checksum_urls="$RELEASE_METADATA_BASE/$VERSION/SHA256SUMS
+$checksum_urls"
+  fi
+  while IFS= read -r checksum_url; do
     CHECKSUMS=$(curl -fsSL --retry 2 --connect-timeout 10 \
       "$checksum_url" 2>/dev/null || true)
     EXPECTED_SHA256=$(printf '%s\n' "$CHECKSUMS" |
@@ -244,7 +205,9 @@ if [ -n "$download_mode" ]; then
       break
     fi
     EXPECTED_SHA256=""
-  done
+  done <<EOF
+$checksum_urls
+EOF
   printf '%s' "$EXPECTED_SHA256" | grep -Eq '^[0-9a-f]{64}$' \
     || err "Could not find a trusted SHA-256 checksum for $downloaded_asset in $VERSION"
   ACTUAL_SHA256=$(sha256_file "$tmpdir/jcode.download") \
@@ -523,7 +486,3 @@ else
     echo "  Future terminal sessions will have jcode on PATH automatically."
   fi
 fi
-
-persist_install_conversion_id
-INSTALL_STAGE="complete"
-INSTALL_SUCCEEDED=1

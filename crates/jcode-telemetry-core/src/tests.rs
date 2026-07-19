@@ -55,8 +55,16 @@ fn background_delivery_queue_is_bounded() {
 }
 
 #[test]
-fn telemetry_endpoint_uses_production_custom_domain() {
-    assert_eq!(TELEMETRY_ENDPOINT, "https://telemetry.jcode.sh/v1/event");
+fn telemetry_endpoint_is_unset_in_the_privacy_first_fork() {
+    assert!(TELEMETRY_ENDPOINT.is_empty());
+}
+
+#[test]
+fn transport_refuses_delivery_when_telemetry_is_disabled() {
+    assert!(!send_payload(
+        serde_json::json!({"event": "must_not_send"}),
+        DeliveryMode::Blocking(Duration::from_millis(1)),
+    ));
 }
 
 fn lock_test_env() -> std::sync::MutexGuard<'static, ()> {

@@ -218,6 +218,7 @@ thread_local! {
     static TEST_LAST_USER_PROMPT_POSITIONS: RefCell<Vec<usize>> = const { RefCell::new(Vec::new()) };
     static TEST_LAST_LAYOUT: RefCell<Option<LayoutSnapshot>> = const { RefCell::new(None) };
     static TEST_LAST_STATUS_AREA: RefCell<Option<Rect>> = const { RefCell::new(None) };
+    static TEST_LAST_PRIMARY_STATUS_SPINNER_CELL: RefCell<Option<Rect>> = const { RefCell::new(None) };
     static TEST_VISIBLE_COPY_TARGETS: RefCell<Vec<VisibleCopyTarget>> = RefCell::new(Vec::new());
     static TEST_VISIBLE_EXPAND_EDIT_BADGE: Cell<bool> = const { Cell::new(false) };
     static TEST_VISIBLE_EXPAND_EDIT_BADGE_LINE: Cell<Option<usize>> = const { Cell::new(None) };
@@ -1236,8 +1237,16 @@ fn full_prep_cache() -> &'static Mutex<FullPrepCacheState> {
 static LAST_STATUS_AREA: OnceLock<Mutex<Option<Rect>>> = OnceLock::new();
 
 #[cfg(not(test))]
+static LAST_PRIMARY_STATUS_SPINNER_CELL: OnceLock<Mutex<Option<Rect>>> = OnceLock::new();
+
+#[cfg(not(test))]
 fn last_status_area_state() -> &'static Mutex<Option<Rect>> {
     LAST_STATUS_AREA.get_or_init(|| Mutex::new(None))
+}
+
+#[cfg(not(test))]
+fn last_primary_status_spinner_cell_state() -> &'static Mutex<Option<Rect>> {
+    LAST_PRIMARY_STATUS_SPINNER_CELL.get_or_init(|| Mutex::new(None))
 }
 
 pub(crate) fn record_status_area(area: Rect) {
@@ -1268,6 +1277,57 @@ pub(crate) fn last_status_area() -> Option<Rect> {
             .ok()
             .and_then(|snapshot| *snapshot)
     }
+}
+
+/// Remember the exact spinner cell from the most recently rendered primary
+/// status line. Unlike `last_status_area`, this accounts for centered text, so
+/// the run loop can update only the spinner instead of redrawing the transcript.
+pub(crate) fn record_primary_status_spinner_cell(cell: Option<Rect>) {
+    #[cfg(test)]
+    {
+        TEST_LAST_PRIMARY_STATUS_SPINNER_CELL.with(|snapshot| {
+            *snapshot.borrow_mut() = cell;
+        });
+        return;
+    }
+    #[cfg(not(test))]
+    {
+        if let Ok(mut snapshot) = last_primary_status_spinner_cell_state().lock() {
+            *snapshot = cell;
+        }
+    }
+}
+
+pub(crate) fn last_primary_status_spinner_cell() -> Option<Rect> {
+    #[cfg(test)]
+    {
+        return TEST_LAST_PRIMARY_STATUS_SPINNER_CELL.with(|snapshot| *snapshot.borrow());
+    }
+    #[cfg(not(test))]
+    {
+        last_primary_status_spinner_cell_state()
+            .lock()
+            .ok()
+            .and_then(|snapshot| *snapshot)
+    }
+}
+
+pub(crate) fn primary_status_spinner_cell(
+    area: Rect,
+    line_width: usize,
+    centered: bool,
+) -> Option<Rect> {
+    if area.width == 0 || area.height == 0 {
+        return None;
+    }
+
+    let line_width = line_width.min(area.width as usize) as u16;
+    let x = if centered {
+        area.x + area.width.saturating_sub(line_width) / 2
+    } else {
+        area.x
+    };
+    Some(Rect::new(x, area.y, 1, 1))
 }
 
 use frame_metrics::{
@@ -1370,6 +1430,9 @@ pub(crate) fn clear_test_render_state_for_tests() {
         *snapshot.borrow_mut() = None;
     });
     TEST_LAST_STATUS_AREA.with(|snapshot| {
+        *snapshot.borrow_mut() = None;
+    });
+    TEST_LAST_PRIMARY_STATUS_SPINNER_CELL.with(|snapshot| {
         *snapshot.borrow_mut() = None;
     });
     set_visible_copy_targets(Vec::new());
