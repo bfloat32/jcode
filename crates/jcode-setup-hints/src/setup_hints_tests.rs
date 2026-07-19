@@ -24,7 +24,7 @@ fn launches_after_third_do_not_show_generic_alignment_tip() {
     assert!(startup_hints_for_launch(&state).is_none());
 }
 
-// Asserts the macOS-specific spawn notice text (`Cmd+;` etc.), so it only makes
+// Asserts the global spawn notice text (`Alt+J` etc.), so it only makes
 // sense on macOS. On other platforms the notice uses different chords/wording.
 #[cfg(target_os = "macos")]
 #[test]
@@ -38,7 +38,7 @@ fn first_three_launches_can_include_hotkey_notice_too() {
     let hints = startup_hints_for_launch(&state).expect("expected startup hint");
     let (_, message) = hints.display_message.expect("expected display message");
     assert!(!message.contains("Alt+C"));
-    assert!(message.contains("Cmd+;"));
+    assert!(message.contains("Alt+J"));
     // The notice should make clear the hotkey works globally, not just inside jcode.
     assert!(message.contains("system-wide"));
     // All three launch hotkeys should be mentioned.
@@ -47,8 +47,8 @@ fn first_three_launches_can_include_hotkey_notice_too() {
 }
 
 #[test]
-fn default_resolved_hotkeys_match_legacy_three() {
-    // With no config, the resolver reproduces the historical three hotkeys.
+fn default_resolved_hotkeys_start_with_alt_j() {
+    // With no config, Alt+J is the primary global launch hotkey.
     let resolved = launch_hotkeys::resolve_launch_hotkeys(
         &jcode_config_types::LaunchHotkeysConfig::default(),
         "/usr/local/bin/jcode",
@@ -56,7 +56,7 @@ fn default_resolved_hotkeys_match_legacy_three() {
         "/home/u/.jcode/hotkey/last_repo",
     );
     let chords: Vec<&str> = resolved.iter().map(|r| r.chord.as_str()).collect();
-    assert_eq!(chords, vec!["cmd+;", "cmd+'", "cmd+shift+'"]);
+    assert_eq!(chords, vec!["alt+j", "cmd+'", "cmd+shift+'"]);
 
     // Home launch passes no extra subcommand; self-dev passes `self-dev`.
     let home = launch_hotkeys::shell_command_for(&resolved[0], "/usr/local/bin/jcode");
@@ -127,7 +127,7 @@ fn baked_repo_hotkey_cds_into_fixed_dir() {
 fn should_record_last_dir_skips_home_only() {
     use std::path::Path;
     let home = Path::new("/Users/jeremy");
-    // Home itself is skipped (Cmd+; already covers home).
+    // Home itself is skipped because Alt+J already covers home.
     assert!(!super::should_record_last_dir(home, Some(home)));
     // Any other project dir is recorded for Cmd+'.
     assert!(super::should_record_last_dir(

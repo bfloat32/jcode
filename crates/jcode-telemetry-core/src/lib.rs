@@ -23,6 +23,10 @@ use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 const TELEMETRY_ENDPOINT: &str = "https://telemetry.jcode.sh/v1/event";
+// Experimental privacy policy: keep the telemetry API as a no-op-compatible
+// seam so upstream syncs remain small, but never collect, persist, or transmit
+// usage, lifecycle, crash, discovery, or author telemetry in this build.
+const TELEMETRY_ENABLED: bool = false;
 const ASYNC_SEND_TIMEOUT: Duration = Duration::from_secs(5);
 const BACKGROUND_QUEUE_CAPACITY: usize = 2048;
 const BLOCKING_INSTALL_TIMEOUT: Duration = Duration::from_millis(1200);
@@ -304,6 +308,9 @@ enum DeliveryMode {
 }
 
 pub fn is_enabled() -> bool {
+    if !TELEMETRY_ENABLED {
+        return false;
+    }
     if std::env::var("JCODE_NO_TELEMETRY").is_ok() || std::env::var("DO_NOT_TRACK").is_ok() {
         logging::debug("telemetry disabled by environment");
         return false;

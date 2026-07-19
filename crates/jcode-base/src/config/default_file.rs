@@ -75,12 +75,12 @@ swarm_panel_focus = "alt+n"
 # Spawn a fresh jcode session in a new terminal window, reusing the current
 # session's working directory. Companion to the system-wide launch hotkeys.
 # `jcode setup-hotkey` installs these three global launch hotkeys on macOS,
-# Linux niri/Hyprland/sway/i3, and Windows. The Cmd modifier maps to Super on
-# Linux and Alt on Windows. Windows also adds the physical Copilot key:
-#   Cmd+;        new jcode in your home directory
+# Linux niri/Hyprland/sway/i3, and Windows. The primary default is Alt+J:
+#   Alt+J        new jcode in your home directory
+# The remaining defaults reopen the last project and launch self-dev.
 #   Cmd+'        new jcode in your last project directory
 #   Cmd+Shift+'  new jcode self-dev session (last jcode repo)
-# Default: Cmd+Shift+; on macOS, Alt+Shift+; elsewhere. Set "" to disable.
+# Set "" to disable global launch hotkeys.
 # Note: some macOS terminals intercept Cmd combos; if so, pick another binding.
 # new_terminal = "cmd+shift+;"
 
@@ -115,8 +115,8 @@ timeout_secs = 90
 # Diff display mode: "off", "inline" (default), "full-inline", "pinned" (dedicated pane), or "file"
 diff_mode = "inline"
 
-# Center all content by default (default: false)
-centered = false
+# Center all content by default (default: true)
+centered = true
 
 # Pin read images to a side pane (default: true)
 pin_images = true
@@ -284,7 +284,7 @@ tool_profile = "acp"
 [provider]
 # Default model (optional, uses provider default if not set)
 # Set via /model picker with Ctrl+B to save as default
-# default_model = "claude-fable-5"
+# default_model = "gpt-5.6-luna"
 # Default provider (optional: claude|anthropic-api|openai|openai-api|copilot|openrouter|...)
 # When set, this provider is preferred on startup if available.
 #   claude        = Claude via OAuth/subscription (token in ~/.jcode/auth.json)
@@ -295,7 +295,7 @@ tool_profile = "acp"
 # See docs/AUTH_CREDENTIAL_SOURCES.md for where each credential lives.
 # default_provider = "copilot"
 # OpenAI reasoning effort (none|minimal|low|medium|high|xhigh|max)
-openai_reasoning_effort = "low"
+openai_reasoning_effort = "medium"
 # Anthropic reasoning effort for Claude reasoning models (none|low|medium|high|xhigh|max)
 # xhigh needs Opus 4.7/4.8 or Fable 5; max needs an output_config effort model (Opus/Sonnet 4.6+).
 # Defaults to xhigh for Claude Opus 4.7/4.8 (high on older Opus) when unset; other models keep their own default.
@@ -303,9 +303,9 @@ openai_reasoning_effort = "low"
 # OpenAI transport mode (auto|websocket|https)
 # openai_transport = "auto"
 # OpenAI service tier override (priority|flex|off)
-# Defaults to `priority` to match Codex /fast behavior for OpenAI OAuth
-# (higher speed, higher usage). Set to "off" (or "standard") to disable.
-openai_service_tier = "priority"
+# Fast mode / service tier (priority|flex|off). Off is the privacy- and
+# cost-preserving default; set to "priority" explicitly when desired.
+openai_service_tier = "off"
 # Preserve provider-native reasoning/thinking for future-turn context when supported.
 # Applies to OpenRouter, Anthropic, and OpenAI native reasoning replay. Display is separate.
 preserve_reasoning_context = true

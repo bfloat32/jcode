@@ -1,5 +1,11 @@
 # jcode Telemetry
 
+> **Experimental branch privacy policy:** telemetry is disabled at the shared
+> runtime gate in this branch. No install, lifecycle, crash, usage, discovery,
+> prompt, or author-attribution telemetry is collected, persisted, or sent.
+> The telemetry API remains as a no-op-compatible seam to keep future upstream
+> synchronization straightforward.
+
 jcode collects **anonymous, minimal usage statistics** to help understand how many people use jcode, what providers/models are popular, whether onboarding works, which feature families are used, how often sessions succeed, and whether performance/regressions are improving. This data helps prioritize development without collecting prompts or code.
 
 Recent telemetry additions also include: coarse onboarding steps, explicit thumbs-up / thumbs-down feedback, build-channel / dev-mode cleanup flags, session/workflow/tool-category summaries, coarse project language buckets, retention helpers like active days in the last 7 / 30 days, workflow cadence fields for session timing and multi-sessioning, privacy-safe per-turn timing/outcome metrics, and schema v5 agent-time / autonomy / pain-attribution metrics.

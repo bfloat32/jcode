@@ -15,19 +15,30 @@ fn restore_env_var(key: &str, previous: Option<OsString>) {
 }
 
 #[test]
-fn test_openai_reasoning_effort_defaults_to_low() {
+fn test_openai_reasoning_effort_defaults_to_medium() {
     assert_eq!(
         ProviderConfig::default().openai_reasoning_effort.as_deref(),
-        Some("low")
+        Some("medium")
     );
 }
 
 #[test]
-fn test_openai_fast_mode_defaults_to_priority() {
+fn test_openai_fast_mode_defaults_to_off() {
     assert_eq!(
         ProviderConfig::default().openai_service_tier.as_deref(),
-        Some("priority")
+        Some("off")
     );
+}
+
+#[test]
+fn privacy_defaults_are_applied() {
+    let config = Config::default();
+    assert_eq!(
+        config.provider.default_model.as_deref(),
+        Some("gpt-5.6-luna")
+    );
+    assert!(config.display.centered);
+    assert!(!jcode_telemetry_core::is_enabled());
 }
 
 #[test]
@@ -457,7 +468,7 @@ fn tool_config_disabled_only_keeps_full_profile_with_deny_list() {
 }
 
 #[test]
-fn test_generated_default_config_uses_low_openai_reasoning_effort() {
+fn test_generated_default_config_uses_experimental_defaults() {
     let _guard = crate::storage::lock_test_env();
     let prev_home = std::env::var_os("JCODE_HOME");
     let dir = tempfile::TempDir::new().expect("tempdir");
@@ -467,12 +478,20 @@ fn test_generated_default_config_uses_low_openai_reasoning_effort() {
     let content = std::fs::read_to_string(path).expect("read default config file");
 
     assert!(
-        content.contains("openai_reasoning_effort = \"low\""),
-        "generated default config should use low OpenAI reasoning effort"
+        content.contains("openai_reasoning_effort = \"medium\""),
+        "generated default config should use medium OpenAI reasoning effort"
     );
     assert!(
-        content.contains("openai_service_tier = \"priority\""),
-        "generated default config should enable OpenAI fast mode"
+        content.contains("openai_service_tier = \"off\""),
+        "generated default config should disable OpenAI fast mode"
+    );
+    assert!(
+        content.contains("# default_model = \"gpt-5.6-luna\""),
+        "generated default config should document the Luna model default"
+    );
+    assert!(
+        content.contains("centered = true"),
+        "generated default config should enable centered layout"
     );
     assert!(
         content.contains("[tools]") && content.contains("profile = \"full\""),

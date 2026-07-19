@@ -1020,7 +1020,7 @@ pub struct DisplayConfig {
     pub mouse_capture: bool,
     /// Enable debug socket for external control (default: false)
     pub debug_socket: bool,
-    /// Center all content (default: false)
+    /// Center all content (default: true)
     pub centered: bool,
     /// Show thinking/reasoning content by default (default: true)
     pub show_thinking: bool,
@@ -1104,7 +1104,7 @@ impl Default for DisplayConfig {
             auto_server_reload: true,
             mouse_capture: true,
             debug_socket: false,
-            centered: false,
+            centered: true,
             show_thinking: true,
             reasoning_display: Some(ReasoningDisplayMode::Current),
             diagram_mode: DiagramDisplayMode::default(),
@@ -1322,12 +1322,12 @@ pub struct ProviderConfig {
 impl Default for ProviderConfig {
     fn default() -> Self {
         Self {
-            default_model: None,
+            default_model: Some("gpt-5.6-luna".to_string()),
             default_provider: None,
-            openai_reasoning_effort: Some("low".to_string()),
+            openai_reasoning_effort: Some("medium".to_string()),
             anthropic_reasoning_effort: None,
             openai_transport: None,
-            openai_service_tier: Some("priority".to_string()),
+            openai_service_tier: Some("off".to_string()),
             openai_native_compaction_mode: "auto".to_string(),
             openai_native_compaction_threshold_tokens: 200_000,
             preserve_reasoning_context: true,

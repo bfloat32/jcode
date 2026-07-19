@@ -589,7 +589,7 @@ fn startup_hints_for_launch(_state: &SetupHintsState) -> Option<StartupHints> {
         None
     } else {
         Some(format!(
-            "Cmd+; launches a new jcode in your home directory from anywhere, system-wide (opens in {}). Cmd+' reopens your last project; Cmd+Shift+' opens a self-dev session.",
+            "Alt+J launches a new jcode in your home directory from anywhere, system-wide (opens in {}). Cmd+' reopens your last project; Cmd+Shift+' opens a self-dev session.",
             effective_macos_terminal().label()
         ))
     };
@@ -697,7 +697,7 @@ pub fn run_setup_hotkey(
                 );
                 eprintln!();
                 eprintln!("  Press these anywhere, system-wide:");
-                eprintln!("    \x1b[1mCmd+;\x1b[0m       new jcode in your home directory");
+                eprintln!("    \x1b[1mAlt+J\x1b[0m        new jcode in your home directory");
                 eprintln!("    \x1b[1mCmd+'\x1b[0m       new jcode in your last project directory");
                 eprintln!(
                     "    \x1b[1mCmd+Shift+'\x1b[0m new jcode self-dev session (last jcode repo)"

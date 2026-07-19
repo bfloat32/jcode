@@ -133,12 +133,13 @@ fn script_name_for(chord: &str, index: usize) -> String {
     format!("launch_jcode_{index}_{slug}.sh")
 }
 
-/// The built-in default entries, used when config has none. Mirrors jcode's
-/// historical `Cmd+;` / `Cmd+'` / `Cmd+Shift+'` layout.
+/// The built-in default entries, used when config has none. Alt+J is the
+/// primary launch chord; the other entries preserve convenient home/project
+/// and self-dev launch paths for users who want more than one global shortcut.
 pub(crate) fn default_launch_entries() -> Vec<LaunchHotkeyEntry> {
     vec![
         LaunchHotkeyEntry {
-            chord: "cmd+;".to_string(),
+            chord: "alt+j".to_string(),
             dir: "$HOME".to_string(),
             label: "home".to_string(),
             self_dev: false,
