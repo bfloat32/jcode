@@ -1,8 +1,12 @@
 use anyhow::Result;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
+#[cfg(windows)]
+use std::collections::HashSet;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+#[cfg(windows)]
+use std::sync::{LazyLock, Mutex};
 
 mod active_pids;
 pub use active_pids::{
@@ -144,6 +148,34 @@ pub fn user_home_path(relative: impl AsRef<Path>) -> Result<PathBuf> {
     Ok(home.join(relative))
 }
 
+#[cfg(windows)]
+static HARDENED_READ_DIRECTORIES: LazyLock<Mutex<HashSet<PathBuf>>> =
+    LazyLock::new(|| Mutex::new(HashSet::new()));
+
+#[cfg(windows)]
+fn harden_read_directory(path: &Path) -> std::io::Result<()> {
+    // Replacing a Windows directory DACL is comparatively expensive. A process
+    // hardens each credential directory before its first read and every secret
+    // file on every read, so repeated credential probes stay safe and cheap.
+    let mut hardened = HARDENED_READ_DIRECTORIES
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if hardened.contains(path) {
+        return Ok(());
+    }
+
+    let result = jcode_core::fs::set_directory_permissions_owner_only(path);
+    if result.is_ok() {
+        hardened.insert(path.to_path_buf());
+    }
+    result
+}
+
+#[cfg(not(windows))]
+fn harden_read_directory(path: &Path) -> std::io::Result<()> {
+    jcode_core::fs::set_directory_permissions_owner_only(path)
+}
+
 /// Best-effort startup hardening for local config dirs that may store credentials.
 ///
 /// This intentionally ignores failures so startup does not fail on exotic
@@ -152,14 +184,14 @@ pub fn harden_user_config_permissions() {
     if let Some(config_dir) = dirs::config_dir() {
         let jcode_config_dir = config_dir.join("jcode");
         if jcode_config_dir.exists() {
-            let _ = jcode_core::fs::set_directory_permissions_owner_only(&jcode_config_dir);
+            let _ = harden_read_directory(&jcode_config_dir);
         }
     }
 
     if let Ok(jcode_home) = jcode_dir()
         && jcode_home.exists()
     {
-        let _ = jcode_core::fs::set_directory_permissions_owner_only(&jcode_home);
+        let _ = harden_read_directory(&jcode_home);
     }
 }
 
@@ -169,7 +201,7 @@ pub fn harden_user_config_permissions() {
 /// be tightened opportunistically.
 pub fn harden_secret_file_permissions(path: &Path) {
     if let Some(parent) = path.parent() {
-        let _ = jcode_core::fs::set_directory_permissions_owner_only(parent);
+        let _ = harden_read_directory(parent);
     }
     if path.exists() {
         let _ = jcode_core::fs::set_permissions_owner_only(path);

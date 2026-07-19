@@ -28,6 +28,8 @@
     "PowerShell install scripts no longer break from a UTF-8 BOM",
     "Logging in no longer activates the same profile twice",
     "Split-pane launches keep their elapsed-time display",
-    "Bash commands no longer spill onto a second line when an intent is shown"
+    "Bash commands no longer spill onto a second line when an intent is shown",
+    "Windows server startup and TUI rendering no longer stall while repeatedly hardening credential directories",
+    "Windows active-session tracking now removes dead PIDs instead of treating every nonzero PID as live"
   ]
 }
