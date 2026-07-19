@@ -3,8 +3,11 @@ use std::path::PathBuf;
 
 use crate::{platform, storage};
 
-const GITHUB_API_LATEST: &str =
-    "https://api.github.com/repos/1jehuang/firefox-agent-bridge/releases/latest";
+const GITHUB_API_LATEST: &str = "";
+// The upstream bridge download is intentionally disabled in this fork. A
+// locally supplied bridge can still be used without contacting the original
+// author's release service.
+const REMOTE_BROWSER_BRIDGE_DOWNLOAD_ENABLED: bool = false;
 
 const NATIVE_HOST_NAME: &str = "firefox_agent_bridge";
 const EXTENSION_ID_LISTED: &str = "browser-agent-bridge@1jehuang.github.io";
@@ -266,6 +269,10 @@ pub async fn ensure_browser_setup() -> Result<String> {
         || !xpi_path().exists()
         || (initial_status.responding && !initial_status.compatible)
     {
+        if !REMOTE_BROWSER_BRIDGE_DOWNLOAD_ENABLED {
+            log.push_str("[1/3] Remote browser bridge download is disabled by this build. Install a trusted local bridge bundle instead.\n");
+            return Ok(log);
+        }
         log.push_str("[1/3] Downloading browser bridge assets... ");
         match download_browser_binary().await {
             Ok(()) => log.push_str("done\n"),

@@ -16,7 +16,8 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime};
 
-const GITHUB_REPO: &str = "1jehuang/jcode";
+const GITHUB_REPO: &str = "bfloat32/jcode";
+const AUTO_UPDATE_ENABLED: bool = false;
 const UPDATE_CHECK_INTERVAL: Duration = Duration::from_secs(60); // minimum gap between checks
 const UPDATE_CHECK_TIMEOUT: Duration = Duration::from_secs(5);
 /// Time allowed for the initial TCP/TLS connect to the download host.
@@ -161,6 +162,12 @@ fn record_source_update_duration(duration: Duration) {
 }
 
 pub fn should_auto_update() -> bool {
+    // Experimental builds never make an unsolicited update check. Explicit
+    // update commands remain available and target this fork's repository.
+    if !AUTO_UPDATE_ENABLED {
+        return false;
+    }
+
     if std::env::var("JCODE_NO_AUTO_UPDATE").is_ok() {
         return false;
     }

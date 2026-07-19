@@ -2100,7 +2100,7 @@ fn show_first_run_notice() {
     eprintln!("  session activity, tool counts, and crash/exit reasons). No code, filenames,");
     eprintln!("  prompts, or personal data is sent.");
     eprintln!("  To opt out: export JCODE_NO_TELEMETRY=1");
-    eprintln!("  Details: https://github.com/1jehuang/jcode/blob/master/TELEMETRY.md");
+    eprintln!("  Details: https://github.com/bfloat32/jcode/blob/experimental/TELEMETRY.md");
     eprintln!("{reset}");
 }
 

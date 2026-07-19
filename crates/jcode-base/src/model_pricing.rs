@@ -24,6 +24,10 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const API_URL: &str = "https://models.dev/api.json";
+// Privacy-first experimental builds never start an unsolicited background
+// request to a third-party pricing service. Cached prices remain readable and
+// curated static prices remain the primary source.
+const LIVE_PRICING_REFRESH_ENABLED: bool = false;
 const CACHE_FILE: &str = "models_dev_pricing.json";
 const CACHE_TTL_SECS: u64 = 24 * 60 * 60;
 const HTTP_TIMEOUT: Duration = Duration::from_secs(20);
@@ -181,6 +185,9 @@ fn ensure_cache_fresh() -> Option<Arc<PricingCache>> {
 /// Spawn one background refresh at a time. Safe to call from sync contexts;
 /// uses a thread + ad-hoc runtime when no Tokio runtime is active.
 pub fn schedule_refresh() {
+    if !LIVE_PRICING_REFRESH_ENABLED {
+        return;
+    }
     // Keep tests hermetic: never hit the network from test builds (the
     // `test-support` feature also covers downstream crates' test targets via
     // feature unification), and let users opt out entirely.

@@ -88,6 +88,9 @@ const MODEL_URL: &str =
     "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx";
 const TOKENIZER_URL: &str =
     "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer.json";
+// A missing local model must not trigger an unsolicited download from a
+// third-party model host. Users can provision a reviewed model bundle locally.
+const EMBEDDING_AUTO_DOWNLOAD_ENABLED: bool = false;
 
 pub type EmbeddingVec = Vec<f32>;
 
@@ -422,6 +425,11 @@ pub fn is_model_available(model_dir: &Path) -> bool {
 }
 
 fn download_model(model_dir: &Path) -> Result<()> {
+    if !EMBEDDING_AUTO_DOWNLOAD_ENABLED {
+        anyhow::bail!(
+            "embedding model is not installed locally; automatic third-party downloads are disabled"
+        );
+    }
     let model_dir = model_dir.to_path_buf();
     match std::thread::spawn(move || download_model_blocking(&model_dir)).join() {
         Ok(result) => result,

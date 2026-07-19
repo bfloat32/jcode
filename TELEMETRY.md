@@ -5,6 +5,11 @@
 > prompt, or author-attribution telemetry is collected, persisted, or sent.
 > The telemetry API remains as a no-op-compatible seam to keep future upstream
 > synchronization straightforward.
+>
+> This branch also defaults partner discovery off, disables background pricing
+> refreshes, connectivity probes, automatic updates, and automatic embedding
+> downloads. Network access remains available only for an explicitly configured
+> provider or a user-invoked network tool, account flow, update, or integration.
 
 jcode collects **anonymous, minimal usage statistics** to help understand how many people use jcode, what providers/models are popular, whether onboarding works, which feature families are used, how often sessions succeed, and whether performance/regressions are improving. This data helps prioritize development without collecting prompts or code.
 
