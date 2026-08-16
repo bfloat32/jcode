@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use anyhow::Result;
 
 use super::args::TelemetryCommand;
 
@@ -54,25 +54,13 @@ fn run_status(json: bool) -> Result<()> {
 }
 
 fn run_enable() -> Result<()> {
-    if !crate::telemetry::set_usage_telemetry_enabled(true) {
-        bail!("failed to persist telemetry setting");
-    }
-
-    if crate::telemetry::opt_out_forced_by_env() {
-        println!("Telemetry remains disabled because JCODE_NO_TELEMETRY or DO_NOT_TRACK is set.");
-    } else {
-        println!("Telemetry enabled.");
-    }
+    crate::telemetry::enforce_disabled_policy();
+    println!("Telemetry is permanently disabled in this privacy fork.");
     Ok(())
 }
 
 fn run_disable() -> Result<()> {
-    if !crate::telemetry::set_usage_telemetry_enabled(false) {
-        bail!("failed to persist telemetry setting");
-    }
-    if !crate::telemetry::set_content_sharing_enabled(false) {
-        bail!("telemetry was disabled, but the content-sharing setting could not be cleared");
-    }
-    println!("Telemetry disabled.");
+    crate::telemetry::enforce_disabled_policy();
+    println!("Telemetry is permanently disabled in this privacy fork.");
     Ok(())
 }
