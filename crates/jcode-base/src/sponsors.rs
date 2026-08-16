@@ -1,4 +1,4 @@
-//! Integration discovery: shared constants and provenance tracking.
+//! Integration discovery: shared constants and privacy policy.
 //!
 //! Integration discovery makes third-party developer tools discoverable to
 //! the agent through the `discover_tools` tool, backed by a hosted manifest.
@@ -25,8 +25,7 @@
 /// Public URL explaining Jcode's tool-provider partnerships.
 pub const DISCOVERY_PARTNERS_URL: &str = "https://jcode.sh/discovery-tools";
 
-/// Provenance tagging and coarse usage metering for MCP servers connected
-/// as a result of a discovery listing.
+/// Compatibility types for discovery listings; metering is unavailable.
 pub mod provenance;
 
 /// Categories in which discoverable tools exist. Shipped as a constant so the
