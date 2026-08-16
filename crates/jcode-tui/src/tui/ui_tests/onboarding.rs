@@ -41,17 +41,13 @@ fn onboarding_state() -> TestState {
 }
 
 #[test]
-fn onboarding_welcome_shows_telemetry_title_and_suggestions() {
+fn onboarding_welcome_omits_telemetry_and_shows_suggestions() {
     let state = onboarding_state();
     let text = render_onboarding(&state, 80, 30);
 
     assert!(
-        text.contains("anonymous usage statistics"),
-        "telemetry notice should be rendered:\n{text}"
-    );
-    assert!(
-        text.contains("JCODE_NO_TELEMETRY=1"),
-        "telemetry opt-out hint should be rendered:\n{text}"
+        !text.contains("telemetry"),
+        "telemetry UI must be absent:\n{text}"
     );
     assert!(
         text.contains("Welcome to jcode onboarding"),
@@ -95,7 +91,6 @@ fn onboarding_welcome_renders_on_tiny_area_without_panicking() {
 
 #[test]
 fn onboarding_welcome_centers_within_tall_area() {
-    // A tall area should leave blank padding above the telemetry header.
     let state = onboarding_state();
     let text = render_onboarding(&state, 80, 40);
     let first_nonblank = text
