@@ -219,6 +219,9 @@ pub(super) fn unregister_active_session(session_id: &str) {
 }
 
 pub(super) fn get_or_create_id() -> Option<String> {
+    if !super::fork_policy::telemetry_available() {
+        return None;
+    }
     let path = telemetry_id_path()?;
     if let Ok(id) = std::fs::read_to_string(&path) {
         let id = id.trim().to_string();
@@ -232,6 +235,9 @@ pub(super) fn get_or_create_id() -> Option<String> {
 }
 
 pub(super) fn read_existing_id() -> Option<String> {
+    if !super::fork_policy::telemetry_available() {
+        return None;
+    }
     let path = telemetry_id_path()?;
     let id = match std::fs::read_to_string(path) {
         Ok(id) => id,

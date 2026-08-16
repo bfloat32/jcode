@@ -18,7 +18,14 @@ struct TestEnvironment {
     previous_home: Option<OsString>,
     previous_no_telemetry: Option<OsString>,
     previous_do_not_track: Option<OsString>,
+    previous_test_enable_telemetry: Option<OsString>,
     _lock: MutexGuard<'static, ()>,
+}
+
+fn lock_fork_policy_test_state() -> TestEnvironment {
+    let guard = global_test_lock();
+    jcode_core::env::remove_var("JCODE_TEST_ENABLE_TELEMETRY");
+    guard
 }
 
 impl Drop for TestEnvironment {
@@ -26,6 +33,10 @@ impl Drop for TestEnvironment {
         restore_env_var("JCODE_HOME", self.previous_home.take());
         restore_env_var("JCODE_NO_TELEMETRY", self.previous_no_telemetry.take());
         restore_env_var("DO_NOT_TRACK", self.previous_do_not_track.take());
+        restore_env_var(
+            "JCODE_TEST_ENABLE_TELEMETRY",
+            self.previous_test_enable_telemetry.take(),
+        );
     }
 }
 
@@ -47,62 +58,20 @@ fn global_test_lock() -> TestEnvironment {
     let previous_home = std::env::var_os("JCODE_HOME");
     let previous_no_telemetry = std::env::var_os("JCODE_NO_TELEMETRY");
     let previous_do_not_track = std::env::var_os("DO_NOT_TRACK");
+    let previous_test_enable_telemetry = std::env::var_os("JCODE_TEST_ENABLE_TELEMETRY");
     jcode_core::env::set_var("JCODE_HOME", home.path());
     jcode_core::env::remove_var("JCODE_NO_TELEMETRY");
     jcode_core::env::remove_var("DO_NOT_TRACK");
+    jcode_core::env::set_var("JCODE_TEST_ENABLE_TELEMETRY", "1");
 
     TestEnvironment {
         _home: home,
         previous_home,
         previous_no_telemetry,
         previous_do_not_track,
+        previous_test_enable_telemetry,
         _lock: lock,
     }
-}
-
-#[test]
-fn permanent_telemetry_statuses_trip_the_process_breaker() {
-    assert!(telemetry_status_is_permanent(400));
-    assert!(telemetry_status_is_permanent(401));
-    assert!(telemetry_status_is_permanent(404));
-    assert!(!telemetry_status_is_permanent(408));
-    assert!(!telemetry_status_is_permanent(425));
-    assert!(!telemetry_status_is_permanent(429));
-    assert!(!telemetry_status_is_permanent(500));
-}
-
-#[test]
-fn background_delivery_queue_is_bounded() {
-    let (started_tx, started_rx) = std::sync::mpsc::sync_channel(1);
-    let (release_tx, release_rx) = std::sync::mpsc::sync_channel(1);
-    let sender = spawn_background_worker(1, move |_| {
-        let _ = started_tx.send(());
-        let _ = release_rx.recv();
-    })
-    .expect("start test telemetry worker");
-
-    sender
-        .send(serde_json::json!({"event": "first"}))
-        .expect("enqueue first payload");
-    started_rx.recv().expect("worker started first payload");
-    sender
-        .try_send(serde_json::json!({"event": "second"}))
-        .expect("bounded queue accepts one waiting payload");
-    assert!(matches!(
-        sender.try_send(serde_json::json!({"event": "third"})),
-        Err(std::sync::mpsc::TrySendError::Full(_))
-    ));
-
-    release_tx.send(()).expect("release telemetry worker");
-}
-
-#[test]
-fn telemetry_endpoint_uses_production_custom_domain() {
-    assert_eq!(TELEMETRY_ENDPOINT, "https://telemetry.jcode.sh/v1/event");
-    assert_eq!(
-        TRANSCRIPT_ENDPOINT,
-        "https://telemetry.jcode.sh/v1/transcript"
-    );
 }
 
 #[test]
@@ -179,6 +148,60 @@ fn telemetry_status_on_fresh_home_is_read_only() {
     assert_eq!(snapshot.telemetry_id, None);
     assert!(!snapshot.content_sharing_enabled);
     assert!(!telemetry_id_path().expect("telemetry id path").exists());
+}
+
+#[test]
+fn fork_policy_permanently_disables_telemetry() {
+    let _guard = lock_fork_policy_test_state();
+
+    let snapshot = status();
+
+    assert!(!snapshot.enabled);
+    assert!(!snapshot.content_sharing_enabled);
+    assert_eq!(
+        snapshot.opt_out_source.map(TelemetryOptOutSource::as_str),
+        Some("fork_policy")
+    );
+    assert_eq!(snapshot.telemetry_id, None);
+    assert!(!set_usage_telemetry_enabled(true));
+    assert!(!set_content_sharing_enabled(true));
+}
+
+#[test]
+fn fork_policy_never_creates_a_telemetry_identity() {
+    let _guard = lock_fork_policy_test_state();
+
+    assert_eq!(get_or_create_id(), None);
+    assert!(!telemetry_id_path().expect("telemetry id path").exists());
+}
+
+#[test]
+fn fork_policy_removes_legacy_telemetry_state() {
+    let _guard = lock_fork_policy_test_state();
+    let root = storage::jcode_dir().expect("telemetry root");
+    std::fs::create_dir_all(root.join("telemetry_active_sessions"))
+        .expect("create legacy telemetry directory");
+    std::fs::write(root.join("telemetry_id"), "legacy-id").expect("write legacy telemetry id");
+    std::fs::write(root.join("telemetry_install_sent"), "1").expect("write legacy install marker");
+    std::fs::write(
+        root.join("install_conversion_id"),
+        uuid::Uuid::new_v4().to_string(),
+    )
+    .expect("write legacy conversion id");
+    std::fs::write(root.join("telemetry_share_transcripts_v1"), "1")
+        .expect("write legacy transcript marker");
+
+    enforce_disabled_policy();
+
+    let remaining = std::fs::read_dir(&root)
+        .expect("read telemetry root")
+        .filter_map(Result::ok)
+        .map(|entry| entry.file_name().to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    assert!(
+        remaining.is_empty(),
+        "legacy telemetry state remains: {remaining:?}"
+    );
 }
 
 #[test]

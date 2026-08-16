@@ -149,11 +149,7 @@ pub(super) fn emit_lifecycle_event(
         return;
     }
     if !state.start_event_sent {
-        let _ = emit_session_start_for_state(
-            id.clone(),
-            &state,
-            DeliveryMode::Blocking(BLOCKING_LIFECYCLE_TIMEOUT),
-        );
+        let _ = emit_session_start_for_state(id.clone(), &state, DeliveryMode::Blocking);
     }
     let duration = state.started_at.elapsed();
     let session_success = state.had_assistant_response
@@ -349,10 +345,10 @@ pub(super) fn emit_lifecycle_event(
         errors,
     };
     if let Ok(payload) = serde_json::to_value(&event) {
-        let _ = send_payload(payload, DeliveryMode::Blocking(BLOCKING_LIFECYCLE_TIMEOUT));
+        let _ = send_payload(payload, DeliveryMode::Blocking);
     }
     if let Ok(payload) = serde_json::to_value(&todo_event) {
-        let _ = send_payload(payload, DeliveryMode::Blocking(BLOCKING_LIFECYCLE_TIMEOUT));
+        let _ = send_payload(payload, DeliveryMode::Blocking);
     }
     unregister_active_session(&state.session_id);
     if session_success {

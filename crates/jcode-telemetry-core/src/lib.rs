@@ -1,9 +1,12 @@
 use jcode_logging as logging;
 use jcode_storage as storage;
+mod fork_policy;
 mod lifecycle;
 pub mod onboarding_trace;
 mod state_support;
 use chrono::{DateTime, NaiveDate, Utc};
+pub use fork_policy::enforce_disabled_policy;
+use fork_policy::telemetry_available;
 use jcode_usage_types::{
     AuthEvent, DiscoveryEvent, ErrorCounts, FeedbackEvent, InstallEvent, OnboardingStepEvent,
     SessionLifecycleEvent, SessionStartEvent, TelemetryProjectProfile as ProjectProfile,
@@ -18,24 +21,11 @@ use lifecycle::emit_lifecycle_event;
 use serde_json::Value;
 use state_support::*;
 use std::collections::HashSet;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{SyncSender, TrySendError, sync_channel};
-use std::sync::{Mutex, OnceLock};
-use std::time::{Duration, Instant};
+use std::sync::Mutex;
+use std::time::Instant;
 
-const TELEMETRY_ENDPOINT: &str = "https://telemetry.jcode.sh/v1/event";
-const TRANSCRIPT_ENDPOINT: &str = "https://telemetry.jcode.sh/v1/transcript";
-const ASYNC_SEND_TIMEOUT: Duration = Duration::from_secs(5);
-const BACKGROUND_QUEUE_CAPACITY: usize = 2048;
-const BLOCKING_INSTALL_TIMEOUT: Duration = Duration::from_millis(1200);
-const BLOCKING_LIFECYCLE_TIMEOUT: Duration = Duration::from_millis(800);
 const TELEMETRY_SCHEMA_VERSION: u32 = 6;
 const DEFAULT_DISCOVERY_ENDPOINT: &str = "https://api.jcode.sh/v1/discovery";
-static TELEMETRY_PERMANENTLY_REJECTED: AtomicBool = AtomicBool::new(false);
-static TELEMETRY_QUEUE_OVERFLOW_WARNED: AtomicBool = AtomicBool::new(false);
-static TELEMETRY_BACKGROUND_SENDER: OnceLock<SyncSender<Value>> = OnceLock::new();
-static TRANSCRIPT_BACKGROUND_SENDER: OnceLock<SyncSender<Value>> = OnceLock::new();
-static TELEMETRY_HTTP_CLIENT: OnceLock<reqwest::blocking::Client> = OnceLock::new();
 #[cfg(test)]
 static TEST_EMITTED_PAYLOADS: Mutex<Vec<Value>> = Mutex::new(Vec::new());
 
@@ -406,11 +396,12 @@ impl TurnTelemetry {
 #[derive(Debug, Clone, Copy)]
 enum DeliveryMode {
     Background,
-    Blocking(Duration),
+    Blocking,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TelemetryOptOutSource {
+    ForkPolicy,
     Environment,
     MarkerFile,
 }
@@ -418,6 +409,7 @@ pub enum TelemetryOptOutSource {
 impl TelemetryOptOutSource {
     pub fn as_str(self) -> &'static str {
         match self {
+            Self::ForkPolicy => "fork_policy",
             Self::Environment => "environment",
             Self::MarkerFile => "marker_file",
         }
@@ -433,6 +425,9 @@ pub struct TelemetryStatus {
 }
 
 pub fn opt_out_source() -> Option<TelemetryOptOutSource> {
+    if !telemetry_available() {
+        return Some(TelemetryOptOutSource::ForkPolicy);
+    }
     if opt_out_forced_by_env() {
         return Some(TelemetryOptOutSource::Environment);
     }
@@ -446,15 +441,19 @@ pub fn opt_out_source() -> Option<TelemetryOptOutSource> {
 pub fn status() -> TelemetryStatus {
     let opt_out_source = opt_out_source();
     TelemetryStatus {
-        enabled: opt_out_source.is_none(),
+        enabled: is_enabled(),
         content_sharing_enabled: content_sharing_enabled(),
         opt_out_source,
-        telemetry_id: read_existing_id(),
+        telemetry_id: telemetry_available().then(read_existing_id).flatten(),
     }
 }
 
 pub fn is_enabled() -> bool {
+    if !telemetry_available() {
+        return false;
+    }
     match opt_out_source() {
+        Some(TelemetryOptOutSource::ForkPolicy) => false,
         Some(TelemetryOptOutSource::Environment) => {
             logging::debug("telemetry disabled by environment");
             false
@@ -467,10 +466,6 @@ pub fn is_enabled() -> bool {
     }
 }
 
-/// Marker file recording that the user opted out of anonymous usage telemetry.
-/// Its presence is equivalent to setting `JCODE_NO_TELEMETRY=1`, but persists
-/// across shells so the onboarding "Telemetry settings" screen can honor the
-/// choice without asking the user to edit their environment.
 fn opt_out_marker_path() -> Option<std::path::PathBuf> {
     storage::jcode_dir().ok().map(|d| d.join("no_telemetry"))
 }
@@ -486,6 +481,10 @@ pub fn opt_out_forced_by_env() -> bool {
 /// writes the `no_telemetry` marker; `true` removes it. Returns whether the
 /// change was persisted (an env-var opt-out still overrides at runtime).
 pub fn set_usage_telemetry_enabled(enabled: bool) -> bool {
+    if !telemetry_available() {
+        enforce_disabled_policy();
+        return !enabled;
+    }
     let Some(path) = opt_out_marker_path() else {
         return false;
     };
@@ -531,6 +530,9 @@ fn share_content_marker_path() -> Option<std::path::PathBuf> {
 /// Whether the user has opted in to sharing prompt/transcript content.
 /// Always false when base telemetry is disabled.
 pub fn content_sharing_enabled() -> bool {
+    if !telemetry_available() {
+        return false;
+    }
     if !is_enabled() {
         return false;
     }
@@ -545,6 +547,10 @@ pub fn content_sharing_enabled() -> bool {
 /// Persist the user's prompt/transcript content-sharing choice. Writing the
 /// marker opts in; removing it opts out. Returns whether the write succeeded.
 pub fn set_content_sharing_enabled(enabled: bool) -> bool {
+    if !telemetry_available() {
+        enforce_disabled_policy();
+        return !enabled;
+    }
     let Some(path) = share_content_marker_path() else {
         return false;
     };
@@ -1251,110 +1257,10 @@ pub fn record_command_family(command: &str) {
     maybe_emit_session_start();
 }
 
-fn post_payload(payload: serde_json::Value, timeout: Duration) -> bool {
-    if TELEMETRY_PERMANENTLY_REJECTED.load(Ordering::Relaxed) {
+fn send_transcript_payload(payload: Value) -> bool {
+    if !is_enabled() {
         return false;
     }
-    let client = TELEMETRY_HTTP_CLIENT.get_or_init(|| {
-        reqwest::blocking::Client::builder()
-            .user_agent(jcode_provider_core::JCODE_USER_AGENT)
-            .build()
-            .expect("telemetry HTTP client should build")
-    });
-    match client
-        .post(TELEMETRY_ENDPOINT)
-        .timeout(timeout)
-        .json(&payload)
-        .send()
-    {
-        Ok(response) if response.status().is_success() => true,
-        Ok(response) => {
-            let status = response.status();
-            if telemetry_status_is_permanent(status.as_u16()) {
-                TELEMETRY_PERMANENTLY_REJECTED.store(true, Ordering::Relaxed);
-                logging::warn(&format!(
-                    "telemetry endpoint permanently rejected payload with HTTP {status}; suppressing telemetry delivery for this process"
-                ));
-            } else {
-                logging::warn(&format!(
-                    "telemetry endpoint temporarily rejected payload with HTTP {status}"
-                ));
-            }
-            false
-        }
-        Err(err) => {
-            logging::warn(&format!("telemetry payload send failed: {err}"));
-            false
-        }
-    }
-}
-
-fn post_transcript_payload(payload: serde_json::Value, timeout: Duration) -> bool {
-    let client = TELEMETRY_HTTP_CLIENT.get_or_init(|| {
-        reqwest::blocking::Client::builder()
-            .user_agent(jcode_provider_core::JCODE_USER_AGENT)
-            .build()
-            .expect("telemetry HTTP client should build")
-    });
-    match client
-        .post(TRANSCRIPT_ENDPOINT)
-        .timeout(timeout)
-        .json(&payload)
-        .send()
-    {
-        Ok(response) if response.status().is_success() => true,
-        Ok(response) => {
-            logging::warn(&format!(
-                "transcript endpoint rejected upload with HTTP {}",
-                response.status()
-            ));
-            false
-        }
-        Err(err) => {
-            logging::warn(&format!("transcript upload failed: {err}"));
-            false
-        }
-    }
-}
-
-fn telemetry_status_is_permanent(status: u16) -> bool {
-    (400..500).contains(&status) && !matches!(status, 408 | 425 | 429)
-}
-
-fn spawn_background_worker<F>(capacity: usize, mut deliver: F) -> std::io::Result<SyncSender<Value>>
-where
-    F: FnMut(Value) + Send + 'static,
-{
-    let (sender, receiver) = sync_channel(capacity);
-    std::thread::Builder::new()
-        .name("jcode-telemetry".to_string())
-        .spawn(move || {
-            while let Ok(payload) = receiver.recv() {
-                deliver(payload);
-            }
-        })?;
-    Ok(sender)
-}
-
-fn background_sender() -> &'static SyncSender<Value> {
-    TELEMETRY_BACKGROUND_SENDER.get_or_init(|| {
-        spawn_background_worker(BACKGROUND_QUEUE_CAPACITY, |payload| {
-            let _ = post_payload(payload, ASYNC_SEND_TIMEOUT);
-        })
-        .expect("telemetry background worker should start")
-    })
-}
-
-fn transcript_background_sender() -> &'static SyncSender<Value> {
-    TRANSCRIPT_BACKGROUND_SENDER.get_or_init(|| {
-        spawn_background_worker(64, |payload| {
-            let _ = post_transcript_payload(payload, ASYNC_SEND_TIMEOUT);
-        })
-        .expect("transcript telemetry background worker should start")
-    })
-}
-
-fn send_transcript_payload(payload: Value) -> bool {
     #[cfg(test)]
     {
         if let Ok(mut emitted) = TEST_EMITTED_PAYLOADS.lock() {
@@ -1363,64 +1269,28 @@ fn send_transcript_payload(payload: Value) -> bool {
         return true;
     }
     #[cfg(not(test))]
-    match transcript_background_sender().try_send(payload) {
-        Ok(()) => true,
-        Err(TrySendError::Full(_)) => {
-            logging::warn("transcript upload queue is full; dropping transcript");
-            false
-        }
-        Err(TrySendError::Disconnected(_)) => {
-            logging::warn("transcript upload worker stopped; dropping transcript");
-            false
-        }
+    {
+        let _ = payload;
+        false
     }
 }
 
 fn send_payload(payload: serde_json::Value, mode: DeliveryMode) -> bool {
-    #[cfg(test)]
-    if let Ok(mut emitted) = TEST_EMITTED_PAYLOADS.lock() {
-        emitted.push(payload.clone());
+    if !is_enabled() {
+        return false;
     }
-    match mode {
-        DeliveryMode::Background => {
-            if TELEMETRY_PERMANENTLY_REJECTED.load(Ordering::Relaxed) {
-                return false;
-            }
-            logging::debug("queueing telemetry payload for background delivery");
-            match background_sender().try_send(payload) {
-                Ok(()) => {
-                    TELEMETRY_QUEUE_OVERFLOW_WARNED.store(false, Ordering::Relaxed);
-                    true
-                }
-                Err(TrySendError::Full(_)) => {
-                    if !TELEMETRY_QUEUE_OVERFLOW_WARNED.swap(true, Ordering::Relaxed) {
-                        logging::warn(&format!(
-                            "telemetry background queue is full (capacity={BACKGROUND_QUEUE_CAPACITY}); dropping events until delivery catches up"
-                        ));
-                    }
-                    false
-                }
-                Err(TrySendError::Disconnected(_)) => {
-                    logging::warn("telemetry background worker stopped; dropping payload");
-                    false
-                }
-            }
+    #[cfg(test)]
+    {
+        if let Ok(mut emitted) = TEST_EMITTED_PAYLOADS.lock() {
+            emitted.push(payload);
         }
-        DeliveryMode::Blocking(timeout) => {
-            logging::debug(&format!(
-                "sending telemetry payload with blocking timeout={}ms",
-                timeout.as_millis()
-            ));
-            if tokio::runtime::Handle::try_current().is_ok() {
-                let (tx, rx) = std::sync::mpsc::sync_channel(1);
-                std::thread::spawn(move || {
-                    let _ = tx.send(post_payload(payload, timeout));
-                });
-                rx.recv_timeout(timeout).unwrap_or(false)
-            } else {
-                post_payload(payload, timeout)
-            }
-        }
+        let _ = mode;
+        true
+    }
+    #[cfg(not(test))]
+    {
+        let _ = (payload, mode);
+        false
     }
 }
 
@@ -1708,6 +1578,7 @@ fn emit_session_start_for_state(id: String, state: &SessionTelemetry, mode: Deli
 pub fn record_install_if_first_run() {
     if !is_enabled() {
         clear_install_conversion_id();
+        enforce_disabled_policy();
         return;
     }
     // Skip install/onboarding emission under CI. Ephemeral runners start with a
@@ -1751,14 +1622,13 @@ pub fn record_install_if_first_run() {
         install_conversion_id,
     };
     if let Ok(payload) = serde_json::to_value(&event)
-        && send_payload(payload, DeliveryMode::Blocking(BLOCKING_INSTALL_TIMEOUT))
+        && send_payload(payload, DeliveryMode::Blocking)
     {
         mark_install_recorded(&id);
         clear_install_conversion_id();
     }
     if first_run {
         emit_onboarding_step_once("first_run", None, None);
-        show_first_run_notice();
     }
     mark_current_version_recorded();
 }
@@ -2068,6 +1938,9 @@ fn begin_session_with_mode(
 }
 
 pub fn record_turn() {
+    if !is_enabled() {
+        return;
+    }
     let id = get_or_create_id();
     if let Ok(mut guard) = SESSION_STATE.lock()
         && let Some(ref mut state) = *guard
@@ -2467,26 +2340,6 @@ pub fn current_provider_model() -> Option<(String, String)> {
             .as_ref()
             .map(|state| (state.provider_start.clone(), state.model_start.clone()))
     })
-}
-
-fn show_first_run_notice() {
-    // This can print before any terminal setup enables VT processing. Legacy
-    // Windows consoles (conhost without ENABLE_VIRTUAL_TERMINAL_PROCESSING,
-    // exactly the double-click-the-exe path) render raw escapes as `←[90m`
-    // garbage (issue #498), so only colorize when the console accepts ANSI
-    // (the helper also opportunistically enables VT mode on Windows).
-    let (dim, reset) = if jcode_core::console::stderr_supports_ansi() {
-        ("\x1b[90m", "\x1b[0m")
-    } else {
-        ("", "")
-    };
-    eprintln!("{dim}");
-    eprintln!("  jcode collects anonymous usage statistics (install count, version, OS,");
-    eprintln!("  session activity, tool counts, and crash/exit reasons). No code, filenames,");
-    eprintln!("  prompts, or personal data is sent.");
-    eprintln!("  To opt out: export JCODE_NO_TELEMETRY=1");
-    eprintln!("  Details: https://github.com/1jehuang/jcode/blob/master/TELEMETRY.md");
-    eprintln!("{reset}");
 }
 
 #[cfg(test)]
