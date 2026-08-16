@@ -2,7 +2,6 @@ use jcode_logging as logging;
 use jcode_storage as storage;
 mod fork_policy;
 mod lifecycle;
-pub mod onboarding_trace;
 mod state_support;
 use chrono::{DateTime, NaiveDate, Utc};
 pub use fork_policy::enforce_disabled_policy;
