@@ -102,9 +102,8 @@ INSTALL_TELEMETRY_LOG="$telemetry_log" \
 HOTKEY_SETUP_LOG="$hotkey_setup_log" \
 bash "$repo_dir/scripts/install.sh" >/dev/null
 
-test "$(cat "$tmp/home/.jcode/install_conversion_id")" = "$conversion_id"
-grep -q '"stage":"installer_start".*"outcome":"success"' "$telemetry_log"
-grep -q '"stage":"installer_finish".*"outcome":"success"' "$telemetry_log"
+test ! -e "$tmp/home/.jcode/install_conversion_id"
+test ! -e "$telemetry_log"
 test "$(cat "$hotkey_setup_log")" = "setup-hotkey"
 
 # If GitHub's release page is blocked, the static jcode.sh version endpoint
@@ -165,7 +164,7 @@ if PATH="$tmp/bin:$PATH" \
   echo "expected release lookup failure" >&2
   exit 1
 fi
-grep -q '"stage":"installer_finish".*"outcome":"failure".*"failure_stage":"release_lookup"' "$failure_log"
+test ! -e "$failure_log"
 
 checksum_failure_log="$tmp/checksum-failure.jsonl"
 if PATH="$tmp/bin:$PATH" \
@@ -180,7 +179,7 @@ if PATH="$tmp/bin:$PATH" \
   echo "expected checksum verification failure" >&2
   exit 1
 fi
-grep -q '"stage":"installer_finish".*"outcome":"failure".*"failure_stage":"artifact_verification"' "$checksum_failure_log"
+test ! -e "$checksum_failure_log"
 
 if grep -q 'api.github.com' "$windows_url_log"; then
   echo "installer must not depend on the rate-limited unauthenticated GitHub API" >&2
@@ -200,4 +199,9 @@ bash "$repo_dir/scripts/install.sh" >/dev/null
 test ! -e "$privacy_log"
 test ! -e "$tmp/home-private/.jcode/install_conversion_id"
 
-echo "installer conversion telemetry tests passed"
+if grep -q 'telemetry.jcode.sh' "$repo_dir/scripts/install.sh"; then
+  echo "installer must not contain a telemetry endpoint" >&2
+  exit 1
+fi
+
+echo "installer telemetry-disable tests passed"
