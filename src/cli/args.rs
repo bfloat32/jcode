@@ -254,7 +254,7 @@ pub(crate) enum Command {
         json: bool,
     },
 
-    /// Inspect or change anonymous telemetry settings
+    /// Inspect telemetry status (permanently disabled in this privacy fork)
     #[command(subcommand)]
     Telemetry(TelemetryCommand),
 
@@ -562,9 +562,9 @@ pub(crate) enum TelemetryCommand {
         #[arg(long)]
         json: bool,
     },
-    /// Enable anonymous usage telemetry
+    /// Report the fork's permanent telemetry policy
     Enable,
-    /// Disable all telemetry persistently
+    /// Clear legacy telemetry state and report the permanent policy
     Disable,
 }
 
