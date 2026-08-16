@@ -22,7 +22,6 @@ fn main() {
         eprintln!("cargo:warning=failed to resolve auto build semver: {err}");
         pkg_version.clone()
     });
-    let (major, minor, patch) = parse_semver(&build_semver).unwrap_or(base_version);
     let base_semver = format!("{}.{}.{}", base_version.0, base_version.1, base_version.2);
     let update_semver = if explicit_build_semver_override().is_some() {
         build_semver.clone()
@@ -110,17 +109,10 @@ fn main() {
         .collect::<Vec<_>>()
         .join("\x1f");
 
-    // Build version string:
-    //   Release: v0.2.17 (abc1234)
-    //   Dev:     v0.2.17-dev (abc1234)
-    //   Dirty:   v0.2.17-dev (abc1234, dirty)
-    let is_release = std::env::var("JCODE_RELEASE_BUILD").is_ok();
-    let version = if is_release {
-        format!("v{}.{}.{} ({})", major, minor, patch, git_hash)
-    } else if dirty {
-        format!("v{}.{}.{}-dev ({}, dirty)", major, minor, patch, git_hash)
+    let version = if dirty {
+        format!("v{base_semver}-exp ({git_hash}, dirty)")
     } else {
-        format!("v{}.{}.{}-dev ({})", major, minor, patch, git_hash)
+        format!("v{base_semver}-exp ({git_hash})")
     };
 
     // Set environment variables for compilation

@@ -9,7 +9,7 @@
 
 use std::sync::OnceLock;
 
-/// Compile-time human-readable version string, e.g. `v0.14.6-dev (abc1234)`.
+/// Compile-time human-readable version string, e.g. `v0.14.6-exp (abc1234)`.
 pub const VERSION: &str = env!("JCODE_VERSION");
 /// Short git hash of the build commit, e.g. `abc1234` (or `unknown`).
 pub const GIT_HASH: &str = env!("JCODE_GIT_HASH");
@@ -61,10 +61,14 @@ pub fn runtime_release_semver() -> Option<&'static str> {
 pub fn version() -> &'static str {
     RUNTIME_VERSION
         .get_or_init(|| {
-            runtime_release_semver().map(|semver| format!("v{semver} ({})", git_hash()))
+            runtime_release_semver().map(|semver| format_runtime_version(semver, git_hash()))
         })
         .as_deref()
         .unwrap_or(VERSION)
+}
+
+fn format_runtime_version(semver: &str, git_hash: &str) -> String {
+    format!("v{semver}-exp ({git_hash})")
 }
 
 fn runtime_identity_value(name: &str) -> Option<String> {
@@ -125,7 +129,20 @@ pub fn is_release_build() -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_release_semver;
+    use super::{BASE_SEMVER, VERSION, format_runtime_version, parse_release_semver};
+
+    #[test]
+    fn compiled_version_tracks_upstream_with_exp_suffix() {
+        assert!(VERSION.starts_with(&format!("v{BASE_SEMVER}-exp (")));
+    }
+
+    #[test]
+    fn runtime_version_tracks_upstream_with_exp_suffix() {
+        assert_eq!(
+            format_runtime_version("0.76.0", "abc1234"),
+            "v0.76.0-exp (abc1234)"
+        );
+    }
 
     #[test]
     fn runtime_release_semver_accepts_only_three_numeric_components() {
