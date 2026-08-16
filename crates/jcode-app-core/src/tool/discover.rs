@@ -771,15 +771,6 @@ impl Tool for DiscoverToolsTool {
                 }
             };
             let catalog_tool = fetched.listing.get("tool").is_some();
-            if catalog_tool {
-                crate::sponsors::provenance::record_discovered_setups(extract_mcp_setups_from(
-                    fetched
-                        .listing
-                        .get("tool")
-                        .map(std::slice::from_ref)
-                        .unwrap_or(&[]),
-                ));
-            }
             let canonical_tool = fetched
                 .listing
                 .get("tool")
@@ -862,10 +853,6 @@ impl Tool for DiscoverToolsTool {
             .and_then(Value::as_array)
             .map(|tools| tools.len().min(u32::MAX as usize) as u32);
 
-        // Remember MCP setups from this listing so a later `mcp connect`
-        // matching one of them is tagged with discovery provenance (and
-        // metered coarsely; see jcode_base::sponsors::provenance).
-        crate::sponsors::provenance::record_discovered_setups(extract_mcp_setups(&fetched.listing));
         record_discovery_telemetry(
             &request_id,
             started_at,
@@ -1257,16 +1244,7 @@ fn normalize_suggestion_url(value: Option<&str>) -> Result<Option<String>> {
     Ok(Some(url.to_string()))
 }
 
-/// Extract structured MCP setups (`mcp: { command, args }`) from a listing
-/// for provenance matching. Entries without an `mcp` descriptor are skipped.
-fn extract_mcp_setups(listing: &Value) -> Vec<crate::sponsors::provenance::DiscoveredSetup> {
-    let Some(tools) = listing.get("tools").and_then(|v| v.as_array()) else {
-        return Vec::new();
-    };
-    extract_mcp_setups_from(tools)
-}
-
-/// Extract MCP setups from a slice of tool entries.
+#[cfg(test)]
 fn extract_mcp_setups_from(tools: &[Value]) -> Vec<crate::sponsors::provenance::DiscoveredSetup> {
     tools
         .iter()

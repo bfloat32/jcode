@@ -18,17 +18,6 @@ use tokio::sync::RwLock;
 /// server from blocking a single tool call forever (and never blocks spawn).
 const CONNECT_ON_CALL_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
 
-/// Meter a completed tool call for partner-discovery provenance. No-op for
-/// servers without discovery provenance (the overwhelmingly common case) and
-/// whenever `sponsors.enabled` is false. Counts only; never content.
-fn meter_provenance_call(server: &str, result: &Result<ToolCallResult>) {
-    let is_error = match result {
-        Ok(res) => res.is_error,
-        Err(_) => true,
-    };
-    crate::sponsors::provenance::on_tool_call(server, is_error);
-}
-
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct McpManagerMemoryProfile {
     pub shared_pool_enabled: bool,
@@ -205,17 +194,6 @@ impl McpManager {
         reason = "MCP connect flow keeps shared-pool and owned-server paths explicit"
     )]
     pub async fn connect(&self, name: &str, config: &McpServerConfig) -> Result<()> {
-        // Partner-discovery provenance: if this server's command matches a
-        // setup the agent saw in a discover_tools listing, tag it so calls to
-        // it are metered coarsely (counts only; see sponsors::provenance).
-        if let Some(sponsor) =
-            crate::sponsors::provenance::on_server_connected(name, &config.command, &config.args)
-        {
-            crate::logging::info(&format!(
-                "MCP: '{name}' connected via integration discovery (provider: {sponsor}); \
-                 coarse usage counts are shared per the disclosed policy"
-            ));
-        }
         if config.shared {
             if let Some(pool) = &self.pool {
                 pool.connect_server(name, config).await?;
@@ -266,9 +244,6 @@ impl McpManager {
 
     /// Disconnect from all servers
     pub async fn disconnect_all(&self) {
-        // Session is ending: flush any pending partner-discovery usage
-        // aggregates (best effort) so short sessions still report.
-        crate::sponsors::provenance::flush_now();
         // Release pool handles
         {
             let mut handles = self.pool_handles.write().await;
@@ -334,18 +309,14 @@ impl McpManager {
         {
             let handles = self.pool_handles.read().await;
             if let Some(handle) = handles.get(server) {
-                let result = handle.call_tool(tool, arguments).await;
-                meter_provenance_call(server, &result);
-                return result;
+                return handle.call_tool(tool, arguments).await;
             }
         }
         // Fast path: already connected via owned client.
         {
             let clients = self.owned_clients.read().await;
             if let Some(client) = clients.get(server) {
-                let result = client.call_tool(tool, arguments).await;
-                meter_provenance_call(server, &result);
-                return result;
+                return client.call_tool(tool, arguments).await;
             }
         }
 
@@ -361,16 +332,12 @@ impl McpManager {
                     {
                         let handles = self.pool_handles.read().await;
                         if let Some(handle) = handles.get(server) {
-                            let result = handle.call_tool(tool, arguments).await;
-                            meter_provenance_call(server, &result);
-                            return result;
+                            return handle.call_tool(tool, arguments).await;
                         }
                     }
                     let clients = self.owned_clients.read().await;
                     if let Some(client) = clients.get(server) {
-                        let result = client.call_tool(tool, arguments).await;
-                        meter_provenance_call(server, &result);
-                        return result;
+                        return client.call_tool(tool, arguments).await;
                     }
                     anyhow::bail!(
                         "MCP server '{server}' connected but exposed no handle for tool '{tool}'"
@@ -685,14 +652,11 @@ done
         path
     }
 
-    /// Full loop: discovery records a setup, connecting a matching server
-    /// tags provenance and counts the connect, real MCP tool calls through
-    /// the manager are metered, non-matching servers are not.
     #[tokio::test]
     // The test-env mutex must intentionally stay held across awaits so the
     // JCODE_HOME/config mutation stays serialized for the whole test.
     #[allow(clippy::await_holding_lock)]
-    async fn discovery_provenance_end_to_end_with_real_mcp_server() {
+    async fn discovery_provenance_does_not_meter_real_mcp_server() {
         let env_guard = crate::storage::lock_test_env();
         let temp = tempfile::tempdir().unwrap();
         crate::env::set_var("JCODE_HOME", temp.path());
@@ -738,9 +702,9 @@ done
             .connect("agentcard", &server_config)
             .await
             .expect("fake MCP server must connect");
-        assert!(crate::sponsors::provenance::is_tagged("agentcard"));
+        assert!(!crate::sponsors::provenance::is_tagged("agentcard"));
 
-        // 3. Real tool calls through the manager are metered.
+        // 3. Real tool calls still work without analytics.
         let result = manager
             .call_tool("agentcard", "create_card", serde_json::json!({}))
             .await
@@ -751,13 +715,9 @@ done
         // never tagged.
         assert!(!crate::sponsors::provenance::is_tagged("other"));
 
-        // 5. Pending aggregates hold exactly the connect + the call.
+        // 5. No usage aggregate is collected.
         let reports = crate::sponsors::provenance::drain_pending_for_tests();
-        assert_eq!(reports.len(), 1);
-        assert_eq!(reports[0].sponsor, "agentcard");
-        assert_eq!(reports[0].connects, 1);
-        assert_eq!(reports[0].calls, 1);
-        assert_eq!(reports[0].errors, 0);
+        assert!(reports.is_empty());
 
         manager.disconnect_all().await;
         drop(env_guard);
