@@ -1,0 +1,242 @@
+schema_version = 1
+manifest_kind = "jcode-intel-supply-chain"
+
+[loader_policy]
+unknown_fields = "reject"
+duplicate_ids = "reject"
+missing_required_fields = "reject"
+missing_identity = "reject"
+mutable_release_inputs = "reject"
+unreviewed_or_expired_exceptions = "reject"
+unavailable_scanner_or_database = "fail"
+stale_database = "fail"
+missing_scan_result = "fail"
+
+[identity_contract]
+algorithm = "sha256"
+encoding = "lowercase-hex"
+canonicalization = "jcode-intel-supply-chain-canonical-toml-v1"
+lockfile_id_field = "lockfile_id"
+direct_source_id_field = "source_id"
+exception_id_field = "exception_id"
+immutable_git_identity = "full_commit_sha"
+forbidden_release_identity_kinds = ["branch", "tag", "latest", "floating_url"]
+
+[license_policy]
+policy_id = "jcode-release-licenses-v1"
+scope = "release_dependencies_and_direct_source_reuse"
+approved_spdx_expressions = [
+  "Apache-2.0",
+  "Apache-2.0 OR MIT",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "MIT",
+  "MIT OR Apache-2.0",
+  "Unicode-3.0",
+  "Zlib",
+]
+unlisted_or_unknown = "reject"
+non_spdx_or_custom = "review_required"
+copyleft = "review_required"
+direct_source_requires = [
+  "immutable_revision",
+  "provenance",
+  "license_expression",
+  "license_approval",
+  "maintenance_owner",
+  "maintenance_decision",
+]
+current_lock_license_inventory = "observed_pending_legal_approval"
+observed_inventory_sha256 = "ea0e9e9fb3cabcd9bccc336f862f6ae3db292c05b834051c725d316b9755a0f6"
+observed_external_package_count = 904
+observed_exact_approved_count = 746
+observed_exact_rejected_count = 158
+observed_rejected_expression_count = 36
+legal_approval_available = false
+release_ready = false
+
+[lockfile_policy]
+root_lockfile_required = true
+standalone_provider_lockfile_required = true
+digest_required = true
+locked_resolution_required = true
+workspace_integration_must_precede_final_identity = true
+missing_lockfile = "reject"
+digest_mismatch = "reject"
+provisional_identity_can_release = false
+
+[[lockfile]]
+lockfile_id = "root-cargo-lock"
+path = "Cargo.lock"
+kind = "cargo"
+lock_version = 4
+sha256 = "c9e2e661145504c9eb650d4523df3155e4192bed1661fa0f0fa3f944c1293034"
+package_count = 996
+registry_package_count = 902
+git_package_count = 2
+workspace_or_path_package_count = 92
+identity_state = "final"
+workspace_integration_complete = true
+release_ready = false
+finalization_task = "task-16-finalize-lock-dependent-supply-chain-identity"
+
+[standalone_provider_lockfiles]
+current_paths = []
+inventory_state = "complete_for_current_tree"
+future_provider_requirement = "add_before_provider_build_or_run"
+
+[direct_source_policy]
+canonical_release_identity = "repository_url_plus_full_commit_sha"
+manifest_tag_or_branch_may_be_canonical = false
+lock_resolved_commit_must_match = true
+license_and_maintenance_approval_required = true
+unapproved_reuse = "reject"
+missing_or_mismatched_commit = "reject"
+
+[[direct_source]]
+source_id = "agentgrep-0.1.6"
+package = "agentgrep"
+version = "0.1.6"
+repository = "https://github.com/1jehuang/agentgrep.git"
+immutable_revision = "b01b804008ab0662fa14e6b60b10bff61716e6f1"
+lock_resolved_revision = "b01b804008ab0662fa14e6b60b10bff61716e6f1"
+canonical_identity_kind = "git_commit"
+manifest_locator_kind = "tag_observed_noncanonical"
+provenance = "Cargo.lock"
+license_expression = "MIT"
+license_approval = "unavailable"
+maintenance_owner = "unavailable"
+maintenance_decision = "unavailable"
+release_ready = false
+
+[[direct_source]]
+source_id = "mermaid-rs-renderer-0.3.1"
+package = "mermaid-rs-renderer"
+version = "0.3.1"
+repository = "https://github.com/1jehuang/mermaid-rs-renderer.git"
+immutable_revision = "2f993bd79a55235eb59a34d807852276ba25bea7"
+lock_resolved_revision = "2f993bd79a55235eb59a34d807852276ba25bea7"
+canonical_identity_kind = "git_commit"
+manifest_locator_kind = "tag_observed_noncanonical"
+provenance = "Cargo.lock"
+license_expression = "MIT"
+license_approval = "unavailable"
+maintenance_owner = "unavailable"
+maintenance_decision = "unavailable"
+release_ready = false
+
+[advisory_policy]
+policy_id = "rustsec-high-gate-v1"
+severity_vocabulary = ["none", "low", "medium", "high", "critical"]
+gate_at_or_above = "high"
+advisory_without_cvss = "matches_gate"
+informational_categories = ["notice", "unmaintained", "unsound"]
+unreviewed_gate_advisory_count_required = 0
+actual_scan_required = true
+
+[advisory_scanner]
+name = "cargo-audit"
+version = "0.22.2"
+source_repository = "https://github.com/rustsec/rustsec"
+source_revision = "281452c35cf0870969042374110f099a411bc185"
+crate_sha256 = "700c2b240f7fd330c24b675fe429f73a5b676531fcc6300400b2b67f155ba12a"
+license_expression = "Apache-2.0 OR MIT"
+minimum_rust_version = "1.88"
+installation_available = false
+installed_binary_path = "unavailable"
+installed_binary_sha256 = "unavailable"
+installed_version_verified = false
+toolchain_compatibility_verified = false
+actual_scan_available = false
+actual_scan_result = "latest_ephemeral_verification_green_current_path_unavailable"
+latest_verified_binary_sha256 = "c077b57f8285e15603e235df173968f694842844e86ac325cc7f84616d78c108"
+latest_verified_toolchain_compatible = true
+release_ready = false
+
+[advisory_database]
+name = "RustSec advisory-db"
+repository = "https://github.com/RustSec/advisory-db.git"
+revision = "69f93e1d081d8b6fbee010e48f0b5e0d13661415"
+commit_time = "2026-08-12T10:42:29Z"
+maximum_age = "P90D"
+checkout_available = false
+local_checkout_path = "unavailable"
+local_revision_verified = false
+runtime_age_verified = false
+latest_ephemeral_revision_verified = true
+latest_ephemeral_runtime_age_verified = true
+content_license_state = "conditional_needs_review"
+content_license_reason = "The pinned repository file named CC-BY-4.0.txt appears to contain Attribution-ShareAlike 4.0 text."
+release_ready = false
+
+[advisory_execution]
+database_fetch_during_scan = false
+required_command = "cargo audit --no-fetch --db <verified-checkout>"
+preconditions = [
+  "scanner_binary_sha256_matches",
+  "database_head_matches_revision",
+  "database_commit_time_matches",
+  "database_age_not_greater_than_P90D",
+  "lockfile_sha256_matches",
+]
+missing_precondition = "fail_before_scan"
+
+[advisory_exception_contract]
+required_fields = [
+  "exception_id",
+  "advisory_id",
+  "owner",
+  "reason",
+  "approved_by",
+  "reviewed_at",
+  "expires_at",
+]
+required_review_state = "approved"
+expiry_format = "RFC3339_UTC"
+expired = "reject"
+missing_field = "reject"
+native_scanner_ignore_is_sufficient = false
+current_exceptions = []
+
+[current_state]
+scanner_database_and_scan_state = "latest_ephemeral_verification_green_current_paths_unavailable"
+historical_red_verification_id = "0426c1703859b7d3fe3508773ffbbb9def88ea9fe3eb603104bd7a9f0c7026d1"
+latest_green_verification_id = "9bba1c0f718cf6e1ff98545224146256233068402a9f82c4777dbad366b5f5e2"
+latest_verified_scan_sha256 = "913150e0951c5be8eabf43a9911a5da92f9d2df65f02dc9fefc99b12237d0d85"
+latest_verified_advisory_gate_satisfied = true
+latest_verified_vulnerability_count = 0
+latest_verified_high_count = 0
+latest_verified_critical_count = 0
+latest_verified_missing_cvss_count = 0
+latest_verified_gate_count = 0
+current_scanner_path_available = false
+current_database_path_available = false
+rustsec_content_license_approval_available = false
+legal_license_approval_available = false
+direct_source_maintenance_approval_available = false
+legacy_script_ignores_satisfy_exception_contract = false
+supply_chain_gate_satisfied = false
+
+[task_16_finalization]
+owner = "task-16-finalize-lock-dependent-supply-chain-identity"
+required_after = "task-14-root-workspace-and-single-lockfile-integration"
+required_actions = [
+  "recompute_root_Cargo_lock_sha256",
+  "recompute_lock_version_and_package_source_inventory",
+  "reconcile_all_root_and_standalone_provider_lockfiles",
+  "reconcile_all_direct_git_sources_to_full_commits",
+  "reconcile_license_and_maintenance_approvals",
+  "verify_pinned_scanner_binary_version_and_sha256",
+  "verify_pinned_database_checkout_revision_timestamp_and_age",
+  "run_the_pinned_scanner_against_the_final_lockfile",
+  "record_reviewed_unexpired_exceptions_or_zero_gate_findings",
+  "set_release_ready_only_after_every_required_cell_is_verified",
+]
+completion_state = "completed_not_release_ready"
+advisory_gate_satisfied = true
+legal_license_gate_satisfied = false
+maintenance_gate_satisfied = false
+rustsec_content_license_gate_satisfied = false
+broader_supply_chain_gate_satisfied = false
+release_ready = false
