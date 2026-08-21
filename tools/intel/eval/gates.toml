@@ -1,0 +1,249 @@
+schema_version = 1
+manifest_kind = "jcode-intel-eval-gates"
+
+[loader_policy]
+unknown_fields = "reject"
+duplicate_ids = "reject"
+missing_metrics = "reject"
+missing_exclusions = "reject"
+partial_results = "reject"
+stale_results = "reject"
+
+[identity_contract]
+algorithm = "sha256"
+encoding = "lowercase-hex"
+canonicalization = "jcode-intel-eval-canonical-toml-v1"
+domain = "jcode-intel-eval-gate-v1"
+id_field = "gate_id"
+immutable_fields = ["gate_id", "stage", "corpus_spec_ids", "checks", "exclusion_policy"]
+ratchet_direction = "tighten_only"
+loosening_requires = "reviewed_design_revision"
+
+[[gate]]
+gate_id = "workspace-health-v1"
+stage = "program"
+corpus_spec_ids = []
+checks = [
+  "cargo_fmt_all_check_passes",
+  "cargo_check_workspace_all_targets_passes",
+  "affected_workspace_tests_pass",
+]
+exclusion_policy = "none"
+
+[[gate]]
+gate_id = "f1-t0-match-correctness-v1"
+stage = "f1"
+corpus_spec_ids = ["search-supported-v1"]
+checks = [
+  "generated_case_count_eq_10000",
+  "curated_case_count_eq_2000",
+  "false_negative_file_count_eq_0",
+  "false_negative_byte_span_count_eq_0",
+  "intentional_differences_have_typed_exclusions",
+  "pinned_rg_identity_matches",
+]
+exclusion_policy = "reviewed_typed_intentional_differences_only"
+
+[[gate]]
+gate_id = "f1-t0-scope-completeness-v1"
+stage = "f1"
+corpus_spec_ids = ["search-supported-v1"]
+checks = [
+  "false_complete_empty_ignored_eq_0",
+  "false_complete_empty_hidden_eq_0",
+  "false_complete_empty_explicit_path_eq_0",
+  "false_complete_empty_binary_eq_0",
+  "false_complete_empty_invalid_utf8_eq_0",
+  "false_complete_empty_overlay_eq_0",
+  "false_complete_empty_tombstone_eq_0",
+  "false_complete_empty_traversal_error_eq_0",
+  "false_complete_empty_timeout_eq_0",
+  "false_complete_empty_cancellation_eq_0",
+  "false_complete_empty_limit_eq_0",
+  "complete_empty_requires_complete_relevant_coverage",
+  "complete_empty_requires_zero_unexplained_drops",
+]
+exclusion_policy = "reviewed_typed_non_claim_bearing_only"
+
+[[gate]]
+gate_id = "f1-t0-resources-v1"
+stage = "f1"
+corpus_spec_ids = ["intel-million-lines-v1"]
+checks = [
+  "cold_index_milliseconds_lt_10000",
+  "incremental_single_file_p95_milliseconds_lt_150",
+  "dense_search_peak_rss_mib_lt_256",
+  "cancellation_ack_p95_milliseconds_lt_250",
+]
+exclusion_policy = "unsupported_platform_cells_require_reviewed_exclusion"
+
+[[gate]]
+gate_id = "f1-t0-output-bounds-v1"
+stage = "f1"
+corpus_spec_ids = ["intel-million-lines-v1"]
+checks = [
+  "dense_match_count_eq_1000000",
+  "default_rendered_bytes_lt_1048576",
+  "execution_completion_distinct_from_render_truncation",
+]
+exclusion_policy = "none"
+
+[[gate]]
+gate_id = "f6-measurement-certificates-v1"
+stage = "f6"
+corpus_spec_ids = ["runtime-link-measurement-v1"]
+checks = [
+  "measurement_contract_all_required_fields_present",
+  "command_and_runtime_sandbox_policy_checks_pass",
+  "binary_world_target_hardware_provider_identities_match",
+  "warmup_repetition_timeout_output_cardinality_bounds_pass",
+  "raw_artifact_capture_complete",
+  "certificate_is_execution_and_artifact_scoped",
+  "comparison_contracts_are_compatible",
+  "native_noop_or_tool_not_running_cannot_pass",
+  "allocator_profiler_setup_failure_cannot_pass",
+  "link_equivalence_requires_covered_bytes_and_sections",
+  "suppressions_annotations_and_ignored_fields_have_exclusion_ids",
+  "measurement_contract_suite_passes",
+  "runtime_link_integration_suite_passes",
+  "every_required_negative_control_rejected",
+  "wrong_comparator_missing_section_altered_binary_tool_bypass_suppression_hidden_error_all_block_clean_certificate",
+]
+exclusion_policy = "unsupported_platform_provider_cells_require_reviewed_exclusion"
+
+[[gate]]
+gate_id = "f2-stable-rust-semantics-v1"
+stage = "f2"
+corpus_spec_ids = ["rust-semantics-v1"]
+checks = [
+  "precision_per_claim_bearing_deterministic_relation_gte_0_98",
+  "recall_per_claim_bearing_deterministic_relation_gte_0_95",
+  "unsupported_constructs_remain_coverage_gaps",
+]
+exclusion_policy = "reviewed_unsupported_constructs_only"
+
+[[gate]]
+gate_id = "f3-capability-operability-v1"
+stage = "f3"
+corpus_spec_ids = ["agent-operability-v1"]
+checks = [
+  "tasks_per_supported_model_family_gte_200",
+  "correct_first_operation_gte_0_90",
+  "correct_eventual_escalation_gte_0_97",
+  "safety_gate_bypass_count_eq_0",
+  "schema_card_skill_parity_eq_1_00",
+]
+exclusion_policy = "reviewed_unsupported_model_families_only"
+
+[[gate]]
+gate_id = "f3-memory-integrity-v1"
+stage = "f3"
+corpus_spec_ids = ["memory-mutation-v1"]
+checks = [
+  "cross_principal_overlay_leak_count_eq_0",
+  "stale_claim_bearing_injection_count_eq_0_across_1000_mutations",
+  "redundant_repeated_analyses_reduction_gte_0_30",
+]
+exclusion_policy = "none"
+
+[[gate]]
+gate_id = "f5-unsafe-screen-v1"
+stage = "f5"
+corpus_spec_ids = ["formal-negative-v1"]
+checks = [
+  "every_detector_meets_predeclared_precision_recall_gate",
+  "regressed_detector_disabled_automatically",
+  "no_finding_never_promoted_as_safety",
+]
+exclusion_policy = "reviewed_detector_specific_only"
+
+[[gate]]
+gate_id = "f5-kani-v1"
+stage = "f5"
+corpus_spec_ids = ["formal-negative-v1"]
+checks = [
+  "expected_harness_property_accounting_eq_1_00",
+  "reject_zero_match",
+  "reject_unreachable",
+  "reject_insufficient_unwind",
+  "reject_missing_partition",
+  "reject_missing_property",
+  "reject_timeout",
+  "reject_parser_negative_controls",
+]
+exclusion_policy = "none"
+
+[[gate]]
+gate_id = "f5-verus-proof-repair-v1"
+stage = "f5"
+corpus_spec_ids = ["formal-negative-v1"]
+checks = [
+  "reject_cheating_spec_weakening_hidden_trust_eq_1_00",
+  "accepted_minimized_proof_reverifies_from_frozen_baseline",
+  "unsupported_termination_never_yields_total_correctness",
+]
+exclusion_policy = "none"
+
+[[gate]]
+gate_id = "f4-verified-changes-v1"
+stage = "f4"
+corpus_spec_ids = ["rust-change-history-v1"]
+checks = [
+  "high_risk_completion_without_required_checks_or_certificate_eq_0",
+  "injected_oracle_fault_detection_eq_1_00",
+  "rollback_restores_all_baseline_digests",
+]
+exclusion_policy = "none"
+
+[[gate]]
+gate_id = "f7-end-task-quality-v1"
+stage = "f7"
+corpus_spec_ids = ["rust-change-history-v1"]
+checks = [
+  "pinned_rust_task_count_gte_200",
+  "successful_completion_percentage_point_improvement_gte_10",
+  "missed_affected_sites_reduction_gte_0_30",
+  "median_source_tool_output_token_reduction_on_joint_successes_gte_0_25",
+  "build_test_success_regression_eq_0",
+]
+exclusion_policy = "reviewed_task_invalidity_only"
+
+[[gate]]
+gate_id = "f7-idle-overhead-v1"
+stage = "f7"
+corpus_spec_ids = []
+checks = ["lazy_startup_p95_added_milliseconds_lte_25", "pre_activation_rss_added_mib_lte_10"]
+exclusion_policy = "reviewed_unsupported_platform_cells_only"
+
+[[gate]]
+gate_id = "privacy-v1"
+stage = "program"
+corpus_spec_ids = []
+checks = [
+  "independent_intelligence_analytics_content_transport_count_eq_0",
+  "telemetry_identity_count_eq_0",
+  "source_query_artifact_content_in_local_operational_metrics_count_eq_0",
+]
+exclusion_policy = "none"
+
+[[gate]]
+gate_id = "baseline-timing-v1"
+stage = "program"
+corpus_spec_ids = []
+checks = [
+  "every_enabled_stage_has_pre_implementation_content_addressed_baseline",
+  "baseline_binds_corpus_config_hardware_fixed_gates_exclusions",
+  "missing_cells_fail",
+]
+exclusion_policy = "reviewed_unsupported_cells_only"
+
+[[gate]]
+gate_id = "supply-chain-v1"
+stage = "program"
+corpus_spec_ids = []
+checks = [
+  "every_root_and_standalone_provider_lockfile_pinned",
+  "direct_source_reuse_has_license_maintenance_approval",
+  "unreviewed_critical_high_advisory_count_eq_0_under_pinned_policy",
+]
+exclusion_policy = "reviewed_unexpired_advisory_exceptions_only"

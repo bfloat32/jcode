@@ -1,0 +1,170 @@
+schema_version = 1
+manifest_kind = "jcode-intel-eval-corpora"
+
+[loader_policy]
+unknown_fields = "reject"
+duplicate_ids = "reject"
+mutable_sources = "reject"
+network_access = "reject"
+missing_content = "reject"
+
+[corpus_spec_identity_contract]
+domain = "jcode-intel-eval-corpus-spec-v1"
+id_field = "spec_id"
+id_kind = "versioned-semantic-id"
+canonical_payload = "entire_corpus_spec_table"
+mutation_policy = "changed_specification_requires_new_spec_id"
+duplicate_ids = "reject"
+references_target = "corpus_spec"
+
+[materialized_corpus_identity_contract]
+algorithm = "sha256"
+encoding = "lowercase-hex"
+canonicalization = "jcode-intel-eval-canonical-toml-v1"
+domain = "jcode-intel-eval-materialized-corpus-v1"
+id_field = "corpus_id"
+digest_field = "content_digest"
+required_identity_fields = [
+  "corpus_id",
+  "spec_id",
+  "content_digest",
+  "license_id",
+  "provenance_uri",
+  "source_kind",
+  "source_revision",
+  "generator_digest",
+  "case_count",
+]
+spec_reference_field = "spec_id"
+mutation_policy = "changed_materialization_requires_new_corpus_id"
+references_target = "materialized_corpus"
+
+[materialized_corpus_contract]
+allowed_source_kinds = ["public", "synthetic"]
+allowed_materialization_states = ["complete"]
+immutable_revision_kinds = ["git_commit", "sha256_archive", "generated_from_pinned_inputs"]
+required_case_fields = ["case_id", "fixture_family", "input_digest", "oracle_digest"]
+forbidden_source_revisions = ["branch", "tag", "latest", "floating_url"]
+case_ids_unique = true
+content_must_match_digest = true
+license_and_provenance_required = true
+
+[[corpus_spec]]
+spec_id = "search-supported-v1"
+stage = "f1"
+source_kinds = ["public", "synthetic"]
+generated_case_count = 10000
+curated_case_count = 2000
+total_case_count = 12000
+required_fixture_families = [
+  "ignored",
+  "hidden",
+  "explicit_path",
+  "binary",
+  "invalid_utf8",
+  "overlay",
+  "tombstone",
+  "traversal_error",
+  "timeout",
+  "cancellation",
+  "limit",
+  "encoding",
+  "multiline",
+]
+required_differential_units = ["file", "byte_span"]
+intentional_differences_require_exclusion = true
+required_complete_empty_disposition = "complete_empty"
+required_silent_drop_count = 0
+
+[corpus_spec.oracle_contract]
+tool = "rg"
+required_arguments = ["--json", "--no-config"]
+required_identity_fields = [
+  "version_output",
+  "binary_sha256",
+  "platform",
+  "arguments",
+  "environment_policy_digest",
+  "supported_intersection_digest",
+]
+binary_digest_algorithm = "sha256"
+binary_digest_encoding = "lowercase-hex"
+environment_policy = "cleared_then_allowlisted"
+missing_or_mismatched_identity = "fail"
+comparison_scope = "supported_intersection"
+
+[[corpus_spec]]
+spec_id = "intel-million-lines-v1"
+stage = "f1"
+source_kinds = ["public", "synthetic"]
+non_generated_rust_lines = 1000000
+required_fixtures = ["cold_index", "incremental_single_file", "dense_search", "cancellation"]
+dense_search_match_count = 1000000
+dense_search_default_rendered_bytes_limit_exclusive = 1048576
+dense_search_execution_completion_distinct_from_render_truncation = true
+
+[[corpus_spec]]
+spec_id = "rust-semantics-v1"
+stage = "f2"
+source_kinds = ["public", "synthetic"]
+required_labels = ["relation", "identity", "diagnostic", "construct"]
+
+[[corpus_spec]]
+spec_id = "agent-operability-v1"
+stage = "f3"
+source_kinds = ["public", "synthetic"]
+minimum_tasks_per_model_family = 200
+required_labels = ["first_choice", "escalation", "refusal", "completion_gate"]
+
+[[corpus_spec]]
+spec_id = "memory-mutation-v1"
+stage = "f3"
+source_kinds = ["public", "synthetic"]
+mutation_case_count = 1000
+required_dimensions = ["world", "principal", "overlay", "continuity"]
+
+[[corpus_spec]]
+spec_id = "formal-negative-v1"
+stage = "f5"
+source_kinds = ["public", "synthetic"]
+required_lanes = ["rustc_screen", "kani", "verus", "proof_repair"]
+
+[[corpus_spec]]
+spec_id = "runtime-link-measurement-v1"
+stage = "f6"
+source_kinds = ["public", "synthetic"]
+required_lanes = ["hotpath", "valgrind", "link"]
+required_measurement_contract_fields = [
+  "world_id",
+  "command",
+  "artifact_digest",
+  "target_id",
+  "hardware_id",
+  "provider_id",
+  "provider_tool_versions",
+  "session_lifecycle",
+  "measured_region",
+  "warmup",
+  "repetitions",
+  "sampling_mode",
+  "timeout",
+  "cardinality_limit",
+  "retention_limit_bytes",
+  "instrumentation_allocator_id",
+  "perturbation",
+  "expected_overhead",
+  "comparison_baseline_id",
+  "exclusion_ids",
+]
+required_certificate_fields = ["actual_execution_mode", "completed_repetitions", "coverage", "exclusion_ids", "suppressions_annotations", "raw_artifact_digests", "deltas", "thresholds", "disposition"]
+required_negative_controls = ["allocator_setup_failure", "native_noop_valgrind", "tool_not_running", "invalid_suppression", "partial_profile_stream", "nonreproducible_link_invocation", "uncovered_sections_or_bytes", "ignored_semantic_field", "broken_oracle"]
+required_oracle_faults = ["wrong_comparator", "missing_section", "altered_binary", "tool_bypass", "suppression_hidden_error"]
+required_exit_conditions = ["measurement_contract_suite_passes", "runtime_link_integration_suite_passes", "every_negative_control_rejected", "every_oracle_fault_blocks_clean_certificate"]
+
+[[corpus_spec]]
+spec_id = "rust-change-history-v1"
+stage = "f7"
+source_kinds = ["public"]
+minimum_task_count = 200
+required_identity_fields = ["parent_commit", "issue_digest", "change_commit"]
+required_labels = ["build_oracle", "test_oracle", "affected_sites"]

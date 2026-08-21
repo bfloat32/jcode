@@ -1,0 +1,240 @@
+schema_version = 1
+manifest_kind = "jcode-intel-eval-release-runner"
+
+[loader_policy]
+unknown_fields = "reject"
+duplicate_ids = "reject"
+unresolved_references = "reject"
+mutable_identity_inputs = "reject"
+planned_results = "reject"
+partial_results = "reject"
+stale_results = "reject"
+post_hoc_baselines = "reject"
+identity_mismatches = "reject"
+missing_stage_evidence = "fail"
+
+[content_addressing]
+algorithm = "sha256"
+encoding = "lowercase-hex"
+canonicalization = "jcode-intel-eval-canonical-toml-v1"
+artifact_extension = ".toml"
+artifact_filename = "<result_id>.toml"
+artifact_filename_format = "64-lowercase-hex-sha256"
+content_key_must_equal_filename = true
+canonical_payload_excludes = ["result_id"]
+
+[stage_identity_contract]
+domain = "jcode-intel-eval-stage-v1"
+id_field = "stage_id"
+id_kind = "closed-versioned-stage-id"
+allowed_ids = ["f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7"]
+required_fields = ["stage_id", "first_implementation_task", "default_feature_state", "required_corpus_spec_ids", "required_gate_ids", "baseline_required_before_implementation", "baseline_required_before_enable", "enable_only_after_passing_result"]
+mutation_policy = "changed_stage_record_requires_manifest_schema_version_bump"
+duplicate_ids = "reject"
+references_target = "stage"
+
+[config_identity_contract]
+domain = "jcode-intel-eval-config-v1"
+id_field = "config_id"
+required_fields = [
+  "jcode_revision",
+  "jcode_binary_sha256",
+  "provider_identities",
+  "feature_set",
+  "execution_limits",
+  "render_limits",
+  "environment_policy_digest",
+  "sandbox_policy_digest",
+  "trust_mode",
+]
+ordered_fields = ["provider_identities", "feature_set"]
+mutable_revisions_forbidden = true
+
+[hardware_identity_contract]
+domain = "jcode-intel-eval-hardware-v1"
+id_field = "hardware_id"
+required_fields = [
+  "cpu_model",
+  "physical_core_count",
+  "logical_core_count",
+  "memory_bytes",
+  "operating_system",
+  "architecture",
+  "kernel_version",
+  "storage_kind",
+  "runner_image_sha256",
+]
+current_hardware_records = []
+
+[exclusion_identity_contract]
+domain = "jcode-intel-eval-exclusion-v1"
+id_field = "exclusion_id"
+required_fields = [
+  "gate_id",
+  "corpus_id",
+  "scope",
+  "reason_code",
+  "rationale",
+  "approver",
+  "reviewed_at",
+  "expires_at",
+]
+required_review_state = "approved"
+unreviewed_or_expired = "reject"
+semantic_effect_requires_reference = true
+
+[result_identity_contract]
+domain = "jcode-intel-eval-result-v1"
+id_field = "result_id"
+required_fields = [
+  "result_id",
+  "stage_id",
+  "result_kind",
+  "lifecycle_state",
+  "disposition",
+  "corpus_ids",
+  "config_id",
+  "hardware_id",
+  "gate_ids",
+  "exclusion_ids",
+  "measurement_revision",
+  "stage_first_implementation_revision",
+  "measurement_started_at",
+  "measurement_finished_at",
+  "metrics",
+  "coverage",
+  "silent_drop_count",
+  "artifact_digests",
+]
+allowed_result_kinds = ["baseline", "staged"]
+passing_lifecycle_state = "complete"
+passing_disposition = "complete_nonempty"
+required_freshness = "current"
+baseline_ordering = "measurement_revision_is_ancestor_of_stage_first_implementation_revision"
+all_gate_metrics_required = true
+all_references_must_resolve = true
+silent_drop_count_required = true
+post_hoc_baseline_can_pass = false
+
+[baseline_policy]
+directory = "baselines"
+discovery_glob = "[0-9a-f][0-9a-f]*.toml"
+missing_baseline_result = "fail"
+missing_baseline_cannot_pass = true
+baseline_command_accepts_only_complete_result = true
+baseline_command_recomputes_all_identities = true
+baseline_command_refuses_overwrite = true
+
+[execution_policy]
+network_access = "deny"
+corpus_sources = ["public", "synthetic"]
+comparison_mode = "same_process_baseline_and_staged"
+clean_temporary_checkouts = true
+resource_capture_required = true
+ci_attestation_when_available = true
+raw_ci_upload = "public_or_synthetic_compatible_license_only"
+non_public_artifacts = "local_unless_explicit_user_export"
+
+[privacy_policy]
+independent_upload_transport = false
+analytics_transport = false
+telemetry_identity = false
+allowed_remote_model_evaluation = "explicit_configuration_public_or_synthetic_licensed_corpora_only"
+forbidden_remote_content = [
+  "non_public_source",
+  "raw_queries",
+  "provider_logs_containing_code",
+  "proof_records",
+  "counterexamples",
+  "runtime_artifacts",
+]
+
+[[stage]]
+stage_id = "f0"
+first_implementation_task = "task-1"
+default_feature_state = "all_intel_features_off"
+required_corpus_spec_ids = []
+required_gate_ids = ["workspace-health-v1", "privacy-v1", "baseline-timing-v1", "supply-chain-v1"]
+baseline_required_before_implementation = false
+baseline_required_before_enable = true
+enable_only_after_passing_result = true
+
+[[stage]]
+stage_id = "f1"
+first_implementation_task = "task-6"
+default_feature_state = "intel-search-opt-in"
+required_corpus_spec_ids = ["search-supported-v1", "intel-million-lines-v1"]
+required_gate_ids = [
+  "workspace-health-v1",
+  "privacy-v1",
+  "baseline-timing-v1",
+  "supply-chain-v1",
+  "f1-t0-match-correctness-v1",
+  "f1-t0-scope-completeness-v1",
+  "f1-t0-resources-v1",
+  "f1-t0-output-bounds-v1",
+]
+baseline_required_before_implementation = true
+baseline_required_before_enable = true
+enable_only_after_passing_result = true
+
+[[stage]]
+stage_id = "f2"
+first_implementation_task = "task-9"
+default_feature_state = "intel-semantic-opt-in"
+required_corpus_spec_ids = ["rust-semantics-v1"]
+required_gate_ids = ["workspace-health-v1", "privacy-v1", "baseline-timing-v1", "supply-chain-v1", "f2-stable-rust-semantics-v1"]
+baseline_required_before_implementation = true
+baseline_required_before_enable = true
+enable_only_after_passing_result = true
+
+[[stage]]
+stage_id = "f3"
+first_implementation_task = "task-12"
+default_feature_state = "intel-guidance-and-intel-memory-independently-opt-in"
+required_corpus_spec_ids = ["agent-operability-v1", "memory-mutation-v1"]
+required_gate_ids = ["workspace-health-v1", "privacy-v1", "baseline-timing-v1", "supply-chain-v1", "f3-capability-operability-v1", "f3-memory-integrity-v1"]
+baseline_required_before_implementation = true
+baseline_required_before_enable = true
+enable_only_after_passing_result = true
+
+[[stage]]
+stage_id = "f4"
+first_implementation_task = "task-14"
+default_feature_state = "intel-change-observe-canary-only"
+required_corpus_spec_ids = ["rust-change-history-v1"]
+required_gate_ids = ["workspace-health-v1", "privacy-v1", "baseline-timing-v1", "supply-chain-v1", "f4-verified-changes-v1"]
+baseline_required_before_implementation = true
+baseline_required_before_enable = true
+enable_only_after_passing_result = true
+
+[[stage]]
+stage_id = "f5"
+first_implementation_task = "task-16"
+default_feature_state = "each_formal_provider_independently_opt-in"
+required_corpus_spec_ids = ["formal-negative-v1"]
+required_gate_ids = ["workspace-health-v1", "privacy-v1", "baseline-timing-v1", "supply-chain-v1", "f5-unsafe-screen-v1", "f5-kani-v1", "f5-verus-proof-repair-v1"]
+baseline_required_before_implementation = true
+baseline_required_before_enable = true
+enable_only_after_passing_result = true
+
+[[stage]]
+stage_id = "f6"
+first_implementation_task = "task-20"
+default_feature_state = "runtime-and-link-providers-independently-opt-in"
+required_corpus_spec_ids = ["runtime-link-measurement-v1"]
+required_gate_ids = ["workspace-health-v1", "privacy-v1", "baseline-timing-v1", "supply-chain-v1", "f6-measurement-certificates-v1"]
+baseline_required_before_implementation = true
+baseline_required_before_enable = true
+enable_only_after_passing_result = true
+
+[[stage]]
+stage_id = "f7"
+first_implementation_task = "task-24"
+default_feature_state = "program-level-ga-after-release-gate"
+required_corpus_spec_ids = ["rust-change-history-v1"]
+required_gate_ids = ["workspace-health-v1", "privacy-v1", "baseline-timing-v1", "supply-chain-v1", "f7-end-task-quality-v1", "f7-idle-overhead-v1"]
+baseline_required_before_implementation = true
+baseline_required_before_enable = true
+enable_only_after_passing_result = true
+consecutive_full_passing_release_runs = 2
