@@ -1,10 +1,22 @@
 # Code Intelligence Repository Map
 
-This map describes the committed compatibility baseline at JCode
-`5ceaec8a602f36ddf871cc24a8dd55aa1ed7ae01`. The current committed descendant
-`730a87df39db82bad2b07974b712aa466f3e0ad1` changes documentation only, so the
-same paths and semantic signatures apply. Uncommitted Task 1 work is not treated
-as an existing runtime boundary.
+This map describes the committed compatibility baseline and the exact committed
+workspace shape accepted by the schema-v2 descendant contract in
+`tools/intel/baseline.toml`.
+
+The committed root workspace contains exactly seven intelligence members, in
+canonical order:
+
+1. `jcode-intel-types`
+2. `jcode-intel-store`
+3. `jcode-intel-search`
+4. `jcode-intel-provider`
+5. `jcode-intel-rust`
+6. `jcode-intel-core`
+7. `jcode-intel-eval`
+
+This workspace integration is structural only. `jcode-app-core` has no
+intelligence dependency, feature, runtime wiring, or authority transition.
 
 Status meanings:
 
@@ -19,7 +31,7 @@ Status meanings:
 
 | Boundary | Owner and canonical paths | Repository reality |
 |---|---|---|
-| Workspace integration | `Cargo.toml`; `crates/jcode-app-core/Cargo.toml` | The root workspace and app-core manifest are the future integration points. App-core currently pins AgentGrep `v0.1.6`; it has no intelligence dependency or feature wiring. |
+| Workspace integration | `Cargo.toml`; `crates/jcode-app-core/Cargo.toml` | The root workspace contains the seven intelligence members listed above in canonical order. App-core currently pins AgentGrep `v0.1.6`; it has no intelligence dependency, feature, runtime wiring, or authority transition. |
 | Tool contract and context | `crates/jcode-tool-core/src/lib.rs`; `crates/jcode-tool-types/src/lib.rs` | `Tool`, `ToolContext`, and `ToolOutput` are existing contracts. `ToolContext` carries session, message, tool-call, working-directory, execution-mode, stdin, and graceful-interrupt state. `ToolOutput` has output, title, metadata, and images. |
 | Tool registry | `crates/jcode-app-core/src/tool/mod.rs` | The base registry directly registers `agentgrep`, `write`, `edit`, `multiedit`, `patch`, and `apply_patch`. It also preserves `ToolOutput.metadata` while applying its context-size guard. |
 | Tool-output conversions | `crates/jcode-app-core/src/agent/{tools,turn_loops,turn_streaming_mpsc}.rs`; `crates/jcode-message-types/src/lib.rs`; `crates/jcode-protocol/src/wire.rs` | The model/history conversion consumes `ToolOutput.output` and images but does not carry metadata into `ContentBlock::ToolResult`. Both native SDK turn loops construct `NativeToolResult` from output text only. The wire `ToolDone` event carries id, name, output, and error, also without metadata. `ToolOutput.metadata` therefore exists but is not a durable model/history, native SDK, or protocol evidence channel. |

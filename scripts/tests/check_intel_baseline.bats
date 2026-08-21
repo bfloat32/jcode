@@ -34,8 +34,8 @@ write_manifest() {
   signature="$(printf 'BEGIN\ninside\n' | fixture_sha256)"
 
   cat > "$repo/tools/intel/baseline.toml" <<EOF
-schema_version = 1
-signature_slice_schema = "jcode-semantic-slices-v1"
+  schema_version = 2
+signature_slice_schema = "jcode-semantic-slices-v2"
 hash_algorithm = "sha256"
 slice_order = "ascending order field"
 marker_cardinality = "start and end must each match exactly one ASCII-trimmed line"
@@ -98,6 +98,160 @@ sha256 = "$signature"
 EOF
 }
 
+write_workspace_cargo() {
+  local state="$1"
+
+  case "$state" in
+    B0)
+      printf '%s\n' '[workspace]' 'members = []' '[lib]' > "$repo/Cargo.toml"
+      ;;
+    B1)
+      printf '%s\n' '[workspace]' 'members = [' \
+        '    "crates/jcode-intel-types",' \
+        '    "crates/jcode-intel-store",' \
+        '    "crates/jcode-intel-search",' \
+        '    "crates/jcode-intel-provider",' \
+        '    "crates/jcode-intel-rust",' \
+        '    "crates/jcode-intel-core",' \
+        '    "crates/jcode-intel-eval",' \
+        ']' '[lib]' > "$repo/Cargo.toml"
+      ;;
+    B3)
+      printf '%s\n' '[workspace]' 'members = [' \
+        '    "crates/jcode-intel-types",' \
+        '    "crates/jcode-intel-store",' \
+        '    "crates/jcode-intel-search",' \
+        '    "crates/jcode-intel-provider",' \
+        '    "crates/jcode-intel-rust",' \
+        '    "crates/jcode-intel-core",' \
+        '    "crates/jcode-intel-eval",' \
+        '    "crates/jcode-intel-evil",' \
+        ']' '[lib]' > "$repo/Cargo.toml"
+      ;;
+    B2)
+      printf '%s\n' '[workspace]' 'members = [' \
+        '    "crates/jcode-intel-types",' \
+        '    "crates/jcode-intel-store",' \
+        '    "crates/jcode-intel-search",' \
+        '    "crates/jcode-intel-provider",' \
+        '    "crates/jcode-intel-rust",' \
+        '    "crates/jcode-intel-core",' \
+        '    "crates/jcode-intel-eval",' \
+        '    "crates/arbitrary",' \
+        ']' '[lib]' > "$repo/Cargo.toml"
+      ;;
+    B4)
+      printf '%s\n' '[workspace]' 'members = [' \
+        '    "crates/jcode-intel-types",' \
+        '    "crates/jcode-intel-store",' \
+        '    "crates/jcode-intel-search",' \
+        '    "crates/jcode-intel-provider",' \
+        '    "crates/jcode-intel-rust",' \
+        '    "crates/jcode-intel-core",' \
+        ']' '[lib]' > "$repo/Cargo.toml"
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+write_workspace_manifest() {
+  local revision="$1"
+  local primary='01682718dc81bf6ca83b17e5a4b7fd755dc44c08357e0c817c20d66e5f474a78'
+  local alternate='1cf8ad1c3f365dc8d6815a3e674639209b2a3c79581e348c97c41e4deb8a5529'
+
+  cat > "$repo/tools/intel/baseline.toml" <<EOF
+schema_version = 2
+signature_slice_schema = "jcode-semantic-slices-v2"
+hash_algorithm = "sha256"
+slice_order = "ascending order field"
+marker_cardinality = "start and end must each match exactly one ASCII-trimmed line"
+slice_bounds = "start inclusive, end exclusive, with start preceding end"
+
+required_paths = [
+  "Cargo.toml",
+]
+
+[jcode]
+revision = "$revision"
+
+[agentgrep]
+version = "0.1.6"
+tag = "v0.1.6"
+revision = "b01b804008ab0662fa14e6b60b10bff61716e6f1"
+repository = "https://github.com/1jehuang/agentgrep.git"
+
+[normalization."rust-v1"]
+decode = "strict UTF-8; strip one leading UTF-8 BOM if present"
+line_endings = "replace CRLF and CR with LF"
+marker_match = "exact equality after trimming ASCII space and tab from both ends"
+extract = "include the unique start-marker line; exclude the unique end-marker line"
+line_transform = "trim ASCII space and tab from both ends"
+drop_empty_lines = true
+drop_line_prefixes = ["//"]
+join = "LF between retained lines and one terminal LF"
+encode = "UTF-8 without BOM before SHA-256"
+
+[normalization."toml-v1"]
+decode = "strict UTF-8; strip one leading UTF-8 BOM if present"
+line_endings = "replace CRLF and CR with LF"
+marker_match = "exact equality after trimming ASCII space and tab from both ends"
+extract = "include the unique start-marker line; exclude the unique end-marker line"
+line_transform = "trim ASCII space and tab from both ends"
+drop_empty_lines = true
+drop_line_prefixes = ["#"]
+join = "LF between retained lines and one terminal LF"
+encode = "UTF-8 without BOM before SHA-256"
+
+[normalization."text-v1"]
+decode = "strict UTF-8; strip one leading UTF-8 BOM if present"
+line_endings = "replace CRLF and CR with LF"
+marker_match = "exact equality after trimming ASCII space and tab from both ends"
+extract = "include the unique start-marker line; exclude the unique end-marker line"
+line_transform = "trim ASCII space and tab from the right only"
+drop_empty_lines = false
+drop_line_prefixes = []
+join = "LF between retained lines and one terminal LF"
+encode = "UTF-8 without BOM before SHA-256"
+
+[[signature_slice]]
+order = 1
+id = "root-workspace-members"
+path = "Cargo.toml"
+normalization = "toml-v1"
+start_marker = "[workspace]"
+end_marker = "[lib]"
+sha256 = "$primary"
+compatible_descendant_sha256 = "$alternate"
+EOF
+}
+
+new_workspace_repo() {
+  mkdir -p "$repo/scripts" "$repo/tools/intel"
+  cp "$guard" "$repo/scripts/check_intel_baseline.sh"
+  chmod +x "$repo/scripts/check_intel_baseline.sh"
+  GIT_MASTER=1 git -C "$repo" init -q
+  write_workspace_cargo B0
+  GIT_MASTER=1 git -C "$repo" add -- Cargo.toml
+  commit_fixture B0-pinned-primary
+  baseline="$(GIT_MASTER=1 git -C "$repo" rev-parse HEAD)"
+  write_workspace_manifest "$baseline"
+}
+
+commit_workspace_state() {
+  write_workspace_cargo "$1"
+  GIT_MASTER=1 git -C "$repo" add -- Cargo.toml
+  commit_fixture "$1"
+}
+
+replace_manifest_line() {
+  local replacement="$1"
+  awk -v replacement="$replacement" '
+    /^compatible_descendant_sha256 = / { print replacement; next }
+    { print }
+  ' "$repo/tools/intel/baseline.toml" > "$work/manifest.toml"
+  mv "$work/manifest.toml" "$repo/tools/intel/baseline.toml"
+}
+
 new_repo() {
   mkdir -p "$repo/scripts" "$repo/tools/intel"
   cp "$guard" "$repo/scripts/check_intel_baseline.sh"
@@ -139,7 +293,13 @@ invoke_guard_with_path() {
 }
 
 assert_success() {
-  [ "$guard_status" -eq 0 ]
+  if [ "$guard_status" -ne 0 ]; then
+    printf 'guard status: %s\nguard stdout:\n' "$guard_status" >&3
+    cat "$stdout_file" >&3
+    printf 'guard stderr:\n' >&3
+    cat "$stderr_file" >&3
+    return 1
+  fi
   [ ! -s "$stdout_file" ]
   [ ! -s "$stderr_file" ]
 }
@@ -173,6 +333,87 @@ assert_rejection() {
   make_docs_descendant
   invoke_guard --allow-descendant
   assert_success
+}
+
+@test "accepts the committed reviewed seven-member workspace descendant only" {
+  new_workspace_repo
+  invoke_guard
+  assert_success
+
+  commit_workspace_state B1
+  invoke_guard --allow-descendant
+  assert_success
+
+  commit_workspace_state B2
+  invoke_guard --allow-descendant
+  assert_rejection
+  [ "$(cat "$stderr_file")" = "check_intel_baseline: current signature root-workspace-members: SHA-256 mismatch" ]
+
+  commit_workspace_state B3
+  invoke_guard --allow-descendant
+  assert_rejection
+  [ "$(cat "$stderr_file")" = "check_intel_baseline: current signature root-workspace-members: SHA-256 mismatch" ]
+
+  commit_workspace_state B4
+  invoke_guard --allow-descendant
+  assert_rejection
+  [ "$(cat "$stderr_file")" = "check_intel_baseline: current signature root-workspace-members: SHA-256 mismatch" ]
+}
+
+@test "rejects malformed compatible descendant hashes and schema versions" {
+  local alternate='1cf8ad1c3f365dc8d6815a3e674639209b2a3c79581e348c97c41e4deb8a5529'
+  local primary='01682718dc81bf6ca83b17e5a4b7fd755dc44c08357e0c817c20d66e5f474a78'
+  local malformed
+
+  new_workspace_repo
+  for malformed in \
+    'compatible_descendant_sha256 = ""' \
+    'compatible_descendant_sha256 = "1CF8AD1C3F365DC8D6815A3E674639209B2A3C79581E348C97C41E4DEB8A5529"' \
+    'compatible_descendant_sha256 = "1cf8ad1c"' \
+    'compatible_descendant_sha256 = "gcf8ad1c3f365dc8d6815a3e674639209b2a3c79581e348c97c41e4deb8a5529"' \
+    "compatible_descendant_sha256 = [ \"$alternate\" ]" \
+    "compatible_descendant_sha256 = \"$primary\""; do
+    write_workspace_manifest "$baseline"
+    replace_manifest_line "$malformed"
+    invoke_guard
+    assert_rejection
+    [[ "$(cat "$stderr_file")" == check_intel_baseline:\ manifest\ invalid:* ]]
+  done
+
+  write_workspace_manifest "$baseline"
+  replace_manifest_line "compatible_descendant_sha257 = \"$alternate\""
+  invoke_guard
+  assert_rejection
+  [[ "$(cat "$stderr_file")" == check_intel_baseline:\ manifest\ invalid:* ]]
+
+  write_workspace_manifest "$baseline"
+  awk '/^compatible_descendant_sha256 = / { print; print; next } { print }' \
+    "$repo/tools/intel/baseline.toml" > "$work/manifest.toml"
+  mv "$work/manifest.toml" "$repo/tools/intel/baseline.toml"
+  invoke_guard
+  assert_rejection
+  [[ "$(cat "$stderr_file")" == check_intel_baseline:\ manifest\ invalid:* ]]
+
+  write_workspace_manifest "$baseline"
+  awk -v alternate="$alternate" '
+    /^compatible_descendant_sha256 = / { next }
+    /^revision = / && !moved { print; print "compatible_descendant_sha256 = \"" alternate "\""; moved=1; next }
+    { print }
+  ' "$repo/tools/intel/baseline.toml" > "$work/manifest.toml"
+  mv "$work/manifest.toml" "$repo/tools/intel/baseline.toml"
+  invoke_guard
+  assert_rejection
+  [[ "$(cat "$stderr_file")" == check_intel_baseline:\ manifest\ invalid:* ]]
+
+  for malformed in 1 3 '"2"' '[2]'; do
+    write_workspace_manifest "$baseline"
+    awk -v schema="$malformed" '/^schema_version = / { print "schema_version = " schema; next } { print }' \
+      "$repo/tools/intel/baseline.toml" > "$work/manifest.toml"
+    mv "$work/manifest.toml" "$repo/tools/intel/baseline.toml"
+    invoke_guard
+    assert_rejection
+    [[ "$(cat "$stderr_file")" == check_intel_baseline:\ manifest\ invalid:* ]]
+  done
 }
 
 @test "allows an unrelated out-of-slice change" {

@@ -1,3 +1,5 @@
+param([string]$Filter)
+
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
@@ -194,15 +196,17 @@ function Write-BaselineManifest {
     param(
         [pscustomobject]$Fixture,
         [string]$Revision = $Fixture.BaselineRevision,
-        [string]$MissingPath
+        [string]$MissingPath,
+        [string]$CompatibleDescendantSha256
     )
 
     $paths = @('    "Cargo.toml",', '    "Cargo.lock",', '    "src/example.rs",', '    "notes.txt",')
     if ($MissingPath) { $paths += "    `"$MissingPath`"," }
     $pathRows = $paths -join "`n"
+    $compatibleDigestRow = if ($CompatibleDescendantSha256) { "`ncompatible_descendant_sha256 = `"$CompatibleDescendantSha256`"" } else { '' }
     $manifest = @"
-schema_version = 1
-signature_slice_schema = "jcode-semantic-slices-v1"
+schema_version = 2
+signature_slice_schema = "jcode-semantic-slices-v2"
 hash_algorithm = "sha256"
 slice_order = "ascending order field"
 marker_cardinality = "start and end must each match exactly one ASCII-trimmed line"
@@ -256,12 +260,12 @@ encode = "UTF-8 without BOM before SHA-256"
 
 [[signature_slice]]
 order = 10
-id = "workspace-toml"
+id = "root-workspace-members"
 path = "Cargo.toml"
 normalization = "toml-v1"
 start_marker = "[workspace]"
 end_marker = "[lib]"
-sha256 = "$($Fixture.Hashes.Toml)"
+sha256 = "$($Fixture.Hashes.Toml)"$compatibleDigestRow
 
 [[signature_slice]]
 order = 20
@@ -350,7 +354,8 @@ function New-Fixture {
         BaselineRevision = Invoke-TestGit -Root $root -Arguments @('rev-parse', 'HEAD')
         RustPath = $rustPath
         Hashes = [pscustomobject]@{
-            Toml = Get-NormalizedSliceHash -Bytes $tomlBytes -Mode 'toml-v1' -StartMarker '[workspace]' -EndMarker '[lib]'
+            Toml = '01682718dc81bf6ca83b17e5a4b7fd755dc44c08357e0c817c20d66e5f474a78'
+            CompatibleToml = '1cf8ad1c3f365dc8d6815a3e674639209b2a3c79581e348c97c41e4deb8a5529'
             Text = Get-NormalizedSliceHash -Bytes $textBytes -Mode 'text-v1' -StartMarker 'begin text' -EndMarker 'end text'
             Alpha = Get-NormalizedSliceHash -Bytes $rustBytes -Mode 'rust-v1' -StartMarker 'pub fn alpha() {' -EndMarker 'pub fn beta() {'
             Beta = Get-NormalizedSliceHash -Bytes $rustBytes -Mode 'rust-v1' -StartMarker 'pub fn beta() {' -EndMarker 'pub fn done() {}'
@@ -371,6 +376,30 @@ function Add-Descendant {
     [void](Invoke-TestGit -Root $Fixture.Root -Arguments @('add', $Path))
     [void](Invoke-TestGit -Root $Fixture.Root -Arguments @('commit', '--quiet', '-m', 'descendant fixture'))
     return Invoke-TestGit -Root $Fixture.Root -Arguments @('rev-parse', 'HEAD')
+}
+
+function Get-WorkspaceStateBytes {
+    param([ValidateSet('B1', 'B2', 'B3', 'B4')][string]$State)
+
+    $members = @(
+        '    "crates/jcode-intel-types",'
+        '    "crates/jcode-intel-store",'
+        '    "crates/jcode-intel-search",'
+        '    "crates/jcode-intel-provider",'
+        '    "crates/jcode-intel-rust",'
+        '    "crates/jcode-intel-core",'
+        '    "crates/jcode-intel-eval",'
+    )
+    if ($State -eq 'B2') { $members += '    "crates/arbitrary",' }
+    if ($State -eq 'B3') { $members += '    "crates/jcode-intel-evil",' }
+    if ($State -eq 'B4') { $members = @($members[0..5]) }
+    return ConvertTo-Utf8Bytes -Text ((@('[workspace]', 'members = [') + $members + @(']', '[lib]', '')) -join "`n")
+}
+
+function Commit-WorkspaceState {
+    param([pscustomobject]$Fixture, [ValidateSet('B1', 'B2', 'B3', 'B4')][string]$State)
+
+    Commit-FixtureBytes -Fixture $Fixture -Path 'Cargo.toml' -Bytes (Get-WorkspaceStateBytes -State $State) -Message $State
 }
 
 function Get-FixtureState {
@@ -396,6 +425,7 @@ function Assert-FixtureState {
 function Invoke-TestCase {
     param([string]$Name, [scriptblock]$Action)
 
+    if ($Filter -and $Name -cne $Filter) { return }
     try {
         & $Action
         $script:Passed += 1
@@ -426,6 +456,92 @@ try {
         Assert-Equal -Label 'compatible descendant exit code' -Expected 0 -Actual $accepted.ExitCode
         Assert-Empty -Label 'compatible descendant stdout' -Text $accepted.Stdout
         Assert-Empty -Label 'compatible descendant stderr' -Text $accepted.Stderr
+    }
+
+    Invoke-TestCase -Name 'accepts the committed reviewed seven-member workspace descendant only' -Action {
+        $fixture = New-Fixture
+        Write-BaselineManifest -Fixture $fixture -CompatibleDescendantSha256 $fixture.Hashes.CompatibleToml
+        $pinned = Invoke-Guard -Fixture $fixture
+        if ($pinned.ExitCode -ne 0) { throw "B0 pinned-primary expected exit 0 but got $($pinned.ExitCode); stderr: $($pinned.Stderr.Trim())" }
+        Assert-Empty -Label 'B0 pinned-primary stdout' -Text $pinned.Stdout
+        Assert-Empty -Label 'B0 pinned-primary stderr' -Text $pinned.Stderr
+
+        Commit-WorkspaceState -Fixture $fixture -State B1
+        $reviewed = Invoke-Guard -Fixture $fixture -Arguments @('--allow-descendant')
+        Assert-Equal -Label 'B1 reviewed alternate exit code' -Expected 0 -Actual $reviewed.ExitCode
+        Assert-Empty -Label 'B1 reviewed alternate stdout' -Text $reviewed.Stdout
+        Assert-Empty -Label 'B1 reviewed alternate stderr' -Text $reviewed.Stderr
+
+        Commit-WorkspaceState -Fixture $fixture -State B2
+        $eighth = Invoke-Guard -Fixture $fixture -Arguments @('--allow-descendant')
+        Assert-Equal -Label 'B2 arbitrary eighth exit code' -Expected 2 -Actual $eighth.ExitCode
+        Assert-Empty -Label 'B2 arbitrary eighth stdout' -Text $eighth.Stdout
+        Assert-Equal -Label 'B2 arbitrary eighth stderr' -Expected "check_intel_baseline: current signature root-workspace-members: SHA-256 mismatch`n" -Actual $eighth.Stderr
+
+        Commit-WorkspaceState -Fixture $fixture -State B3
+        $evilEighth = Invoke-Guard -Fixture $fixture -Arguments @('--allow-descendant')
+        Assert-Equal -Label 'B3 evil eighth exit code' -Expected 2 -Actual $evilEighth.ExitCode
+        Assert-Empty -Label 'B3 evil eighth stdout' -Text $evilEighth.Stdout
+        Assert-Equal -Label 'B3 evil eighth stderr' -Expected "check_intel_baseline: current signature root-workspace-members: SHA-256 mismatch`n" -Actual $evilEighth.Stderr
+
+        Commit-WorkspaceState -Fixture $fixture -State B4
+        $omitted = Invoke-Guard -Fixture $fixture -Arguments @('--allow-descendant')
+        Assert-Equal -Label 'B4 omitted member exit code' -Expected 2 -Actual $omitted.ExitCode
+        Assert-Empty -Label 'B4 omitted member stdout' -Text $omitted.Stdout
+        Assert-Equal -Label 'B4 omitted member stderr' -Expected "check_intel_baseline: current signature root-workspace-members: SHA-256 mismatch`n" -Actual $omitted.Stderr
+    }
+
+    Invoke-TestCase -Name 'rejects malformed compatible descendant hashes and schema versions' -Action {
+        $alternate = '1cf8ad1c3f365dc8d6815a3e674639209b2a3c79581e348c97c41e4deb8a5529'
+        $primary = '01682718dc81bf6ca83b17e5a4b7fd755dc44c08357e0c817c20d66e5f474a78'
+        $malformedRows = @(
+            'compatible_descendant_sha256 = ""'
+            'compatible_descendant_sha256 = "1CF8AD1C3F365DC8D6815A3E674639209B2A3C79581E348C97C41E4DEB8A5529"'
+            'compatible_descendant_sha256 = "1cf8ad1c"'
+            'compatible_descendant_sha256 = "gcf8ad1c3f365dc8d6815a3e674639209b2a3c79581e348c97c41e4deb8a5529"'
+            "compatible_descendant_sha256 = [ `"$alternate`" ]"
+            "compatible_descendant_sha256 = `"$primary`""
+        )
+        foreach ($row in $malformedRows) {
+            $fixture = New-Fixture
+            Write-BaselineManifest -Fixture $fixture -CompatibleDescendantSha256 $alternate
+            Replace-ManifestText -Fixture $fixture -Find "compatible_descendant_sha256 = `"$alternate`"" -Replace $row
+            $result = Invoke-Guard -Fixture $fixture
+            Assert-Equal -Label "malformed alternate '$row' exit code" -Expected 2 -Actual $result.ExitCode
+            Assert-Contains -Label 'malformed alternate stderr' -Text $result.Stderr -Needle 'manifest invalid'
+            Assert-Empty -Label 'malformed alternate stdout' -Text $result.Stdout
+        }
+
+        $unknownFixture = New-Fixture
+        Write-BaselineManifest -Fixture $unknownFixture -CompatibleDescendantSha256 $alternate
+        Replace-ManifestText -Fixture $unknownFixture -Find 'compatible_descendant_sha256' -Replace 'compatible_descendant_sha257'
+        $unknown = Invoke-Guard -Fixture $unknownFixture
+        Assert-Equal -Label 'unknown alternate key exit code' -Expected 2 -Actual $unknown.ExitCode
+        Assert-Contains -Label 'unknown alternate key stderr' -Text $unknown.Stderr -Needle 'manifest invalid'
+
+        $duplicateFixture = New-Fixture
+        Write-BaselineManifest -Fixture $duplicateFixture -CompatibleDescendantSha256 $alternate
+        Replace-ManifestText -Fixture $duplicateFixture -Find "compatible_descendant_sha256 = `"$alternate`"" -Replace "compatible_descendant_sha256 = `"$alternate`"`ncompatible_descendant_sha256 = `"$alternate`""
+        $duplicate = Invoke-Guard -Fixture $duplicateFixture
+        Assert-Equal -Label 'duplicate alternate key exit code' -Expected 2 -Actual $duplicate.ExitCode
+        Assert-Contains -Label 'duplicate alternate key stderr' -Text $duplicate.Stderr -Needle 'manifest invalid'
+
+        $sectionFixture = New-Fixture
+        Write-BaselineManifest -Fixture $sectionFixture -CompatibleDescendantSha256 $alternate
+        Replace-ManifestText -Fixture $sectionFixture -Find "compatible_descendant_sha256 = `"$alternate`"" -Replace ''
+        Replace-ManifestText -Fixture $sectionFixture -Find "revision = `"$($sectionFixture.BaselineRevision)`"" -Replace "revision = `"$($sectionFixture.BaselineRevision)`"`ncompatible_descendant_sha256 = `"$alternate`""
+        $wrongSection = Invoke-Guard -Fixture $sectionFixture
+        Assert-Equal -Label 'wrong-section alternate exit code' -Expected 2 -Actual $wrongSection.ExitCode
+        Assert-Contains -Label 'wrong-section alternate stderr' -Text $wrongSection.Stderr -Needle 'manifest invalid'
+
+        foreach ($schema in @('1', '3', '"2"', '[2]')) {
+            $schemaFixture = New-Fixture
+            Replace-ManifestText -Fixture $schemaFixture -Find 'schema_version = 2' -Replace "schema_version = $schema"
+            $schemaResult = Invoke-Guard -Fixture $schemaFixture
+            Assert-Equal -Label "schema $schema exit code" -Expected 2 -Actual $schemaResult.ExitCode
+            Assert-Contains -Label 'schema stderr' -Text $schemaResult.Stderr -Needle 'manifest invalid'
+            Assert-Empty -Label 'schema stdout' -Text $schemaResult.Stdout
+        }
     }
 
     Invoke-TestCase -Name 'missing required path rejects with exit 2 and the exact path' -Action {
@@ -633,13 +749,13 @@ try {
         }
 
         $duplicateKeyFixture = New-Fixture
-        Replace-ManifestText -Fixture $duplicateKeyFixture -Find 'schema_version = 1' -Replace "schema_version = 1`nschema_version = 1"
+        Replace-ManifestText -Fixture $duplicateKeyFixture -Find 'schema_version = 2' -Replace "schema_version = 2`nschema_version = 2"
         $duplicateKey = Invoke-Guard -Fixture $duplicateKeyFixture
         Assert-Equal -Label 'duplicate key exit code' -Expected 2 -Actual $duplicateKey.ExitCode
         Assert-Contains -Label 'duplicate key stderr' -Text $duplicateKey.Stderr -Needle 'manifest invalid'
 
         $caseTokenFixture = New-Fixture
-        Replace-ManifestText -Fixture $caseTokenFixture -Find 'schema_version = 1' -Replace 'Schema_version = 1'
+        Replace-ManifestText -Fixture $caseTokenFixture -Find 'schema_version = 2' -Replace 'Schema_version = 2'
         $caseToken = Invoke-Guard -Fixture $caseTokenFixture
         Assert-Equal -Label 'case-sensitive token exit code' -Expected 2 -Actual $caseToken.ExitCode
         Assert-Contains -Label 'case-sensitive token stderr' -Text $caseToken.Stderr -Needle 'manifest invalid'

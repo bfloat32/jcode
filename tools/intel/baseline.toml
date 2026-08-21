@@ -1,5 +1,5 @@
-schema_version = 1
-signature_slice_schema = "jcode-semantic-slices-v1"
+schema_version = 2
+signature_slice_schema = "jcode-semantic-slices-v2"
 hash_algorithm = "sha256"
 slice_order = "ascending order field"
 marker_cardinality = "start and end must each match exactly one ASCII-trimmed line"
@@ -99,6 +99,7 @@ normalization = "toml-v1"
 start_marker = "[workspace]"
 end_marker = "[lib]"
 sha256 = "c3b784f7b595ced853382778133458503054a788fb6ed1aa6869a1ee0e306fb6"
+compatible_descendant_sha256 = "39e840c1f93d596e34ae2521c9bc4060ef0eb52d353fff433fe80621f0ddd74d"
 
 [[signature_slice]]
 order = 2

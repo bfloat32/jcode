@@ -6,7 +6,7 @@ tmpdir="" normal_index=0
 errors=()
 seen=()
 required_paths=()
-slice_ids=() slice_paths=() slice_modes=() slice_starts=() slice_ends=() slice_hashes=()
+slice_ids=() slice_paths=() slice_modes=() slice_starts=() slice_ends=() slice_hashes=() slice_alternates=()
 
 cleanup() { [ -z "$tmpdir" ] || rm -rf "$tmpdir"; }
 die() { printf 'check_intel_baseline: %s\n' "$1" >&2; exit 2; }
@@ -115,9 +115,10 @@ finalize_slice() {
   valid_path "$current_path" && contains "$current_path" "${required_paths[@]}" || { invalid_manifest "slice path is not required: $current_path"; return 1; }
   case "$current_mode" in rust-v1|toml-v1|text-v1) ;; *) invalid_manifest "unknown normalization: $current_mode"; return 1 ;; esac
   [[ "$current_hash" =~ ^[0-9a-f]{64}$ ]] || { invalid_manifest "invalid slice hash: $current_id"; return 1; }
+  ! contains "slice:$slice_index:compatible_descendant_sha256" "${seen[@]}" || { [[ "$current_alternate" =~ ^[0-9a-f]{64}$ ]] && [ "$current_alternate" != "$current_hash" ]; } || { invalid_manifest "invalid compatible descendant hash: $current_id"; return 1; }
   slice_ids[${#slice_ids[@]}]="$current_id"; slice_paths[${#slice_paths[@]}]="$current_path"
   slice_modes[${#slice_modes[@]}]="$current_mode"; slice_starts[${#slice_starts[@]}]="$current_start"
-  slice_ends[${#slice_ends[@]}]="$current_end"; slice_hashes[${#slice_hashes[@]}]="$current_hash"
+  slice_ends[${#slice_ends[@]}]="$current_end"; slice_hashes[${#slice_hashes[@]}]="$current_hash"; slice_alternates[${#slice_alternates[@]}]="$current_alternate"
   last_order="$current_order"; slice_active=0
 }
 
@@ -138,7 +139,7 @@ parse_manifest() {
     fi
     if [ "$line" = '[[signature_slice]]' ]; then
       finalize_slice || return 1; slice_index=$((slice_index + 1)); slice_active=1; section=slice
-      current_order=0; current_id=; current_path=; current_mode=; current_start=; current_end=; current_hash=; continue
+      current_order=0; current_id=; current_path=; current_mode=; current_start=; current_end=; current_hash=; current_alternate=; continue
     fi
     if [[ "$line" == \[*\] ]]; then
       finalize_slice || return 1
@@ -157,10 +158,10 @@ parse_manifest() {
       top)
         mark_seen "top:$key" || { invalid_manifest "duplicate key: $key"; return 1; }
         case "$key" in
-          schema_version) [ "$raw" = 1 ] || { invalid_manifest 'unsupported schema version'; return 1; } ;;
+          schema_version) [ "$raw" = 2 ] || { invalid_manifest 'unsupported schema version'; return 1; } ;;
           signature_slice_schema|hash_algorithm|slice_order|marker_cardinality|slice_bounds)
             toml_string "$raw" || { invalid_manifest "invalid value: $key"; return 1; }
-            case "$key:$decoded" in signature_slice_schema:jcode-semantic-slices-v1|hash_algorithm:sha256|slice_order:'ascending order field'|marker_cardinality:'start and end must each match exactly one ASCII-trimmed line'|slice_bounds:'start inclusive, end exclusive, with start preceding end') ;; *) invalid_manifest "unsupported value: $key"; return 1 ;; esac ;;
+            case "$key:$decoded" in signature_slice_schema:jcode-semantic-slices-v2|hash_algorithm:sha256|slice_order:'ascending order field'|marker_cardinality:'start and end must each match exactly one ASCII-trimmed line'|slice_bounds:'start inclusive, end exclusive, with start preceding end') ;; *) invalid_manifest "unsupported value: $key"; return 1 ;; esac ;;
           required_paths) [ "$raw" = '[' ] || { invalid_manifest 'invalid required_paths'; return 1; }; in_paths=1 ;;
           *) invalid_manifest "unsupported top-level key: $key"; return 1 ;;
         esac ;;
@@ -177,7 +178,7 @@ parse_manifest() {
         mark_seen "slice:$slice_index:$key" || { invalid_manifest "duplicate slice key: $key"; return 1; }
         case "$key" in
           order) [[ "$raw" =~ ^[1-9][0-9]*$ ]] || { invalid_manifest 'invalid slice order'; return 1; }; current_order="$raw" ;;
-          id|path|normalization|start_marker|end_marker|sha256) toml_string "$raw" || { invalid_manifest "invalid slice key: $key"; return 1; }; case "$key" in id) [[ "$decoded" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { invalid_manifest 'invalid slice id'; return 1; }; current_id="$decoded" ;; path) current_path="$decoded" ;; normalization) current_mode="$decoded" ;; start_marker) [ -n "$decoded" ] || { invalid_manifest 'empty start marker'; return 1; }; current_start="$decoded" ;; end_marker) [ -n "$decoded" ] || { invalid_manifest 'empty end marker'; return 1; }; current_end="$decoded" ;; sha256) current_hash="$decoded" ;; esac ;;
+          id|path|normalization|start_marker|end_marker|sha256|compatible_descendant_sha256) toml_string "$raw" || { invalid_manifest "invalid slice key: $key"; return 1; }; case "$key" in id) [[ "$decoded" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { invalid_manifest 'invalid slice id'; return 1; }; current_id="$decoded" ;; path) current_path="$decoded" ;; normalization) current_mode="$decoded" ;; start_marker) [ -n "$decoded" ] || { invalid_manifest 'empty start marker'; return 1; }; current_start="$decoded" ;; end_marker) [ -n "$decoded" ] || { invalid_manifest 'empty end marker'; return 1; }; current_end="$decoded" ;; sha256) current_hash="$decoded" ;; compatible_descendant_sha256) current_alternate="$decoded" ;; esac ;;
           *) invalid_manifest "unsupported slice key: $key"; return 1 ;;
         esac ;;
       *) invalid_manifest "line $line_number: assignment outside a section"; return 1 ;;
@@ -202,7 +203,7 @@ sha256_file() {
 }
 
 check_slice() {
-  local label="$1" id="$2" mode="$3" start="$4" end="$5" expected_hash="$6" source="$7" output="$8"
+  local label="$1" id="$2" mode="$3" start="$4" end="$5" expected_hash="$6" alternate_hash="$7" source="$8" output="$9"
   local line number=0 start_count=0 end_count=0 start_line=0 end_line=0 valid=1 transformed
   while IFS= read -r line || [ -n "$line" ]; do
     number=$((number + 1)); line="$(trim "$line")"
@@ -224,7 +225,7 @@ check_slice() {
     printf '%s\n' "$transformed" >> "$output"
   done < "$source"
   sha256_file "$output" || die "SHA-256 tool failed: $hash_error"
-  [ "$digest" = "$expected_hash" ] || add_error "$label signature $id: SHA-256 mismatch"
+  [ "$digest" = "$expected_hash" ] || { [ "$label" = current ] && [ -n "$alternate_hash" ] && [ "$digest" = "$alternate_hash" ]; } || add_error "$label signature $id: SHA-256 mismatch"
 }
 
 check_revision() {
@@ -238,7 +239,7 @@ check_revision() {
     raw="$tmpdir/$label.raw.$index"; normalized="$tmpdir/$label.normalized.$index"; output="$tmpdir/$label.signature.$index"
     GIT_MASTER=1 git -C "$repo_root" show "$revision:$path" > "$raw" 2>/dev/null || { add_error "git query failed: read $label path $path"; continue; }
     normalize_utf8 "$raw" "$normalized" || { [ "$normal_error" = 'invalid UTF-8' ] && add_error "$label signature ${slice_ids[index]}: invalid UTF-8" || add_error "$label signature ${slice_ids[index]}: normalization failed"; continue; }
-    check_slice "$label" "${slice_ids[index]}" "${slice_modes[index]}" "${slice_starts[index]}" "${slice_ends[index]}" "${slice_hashes[index]}" "$normalized" "$output"
+    check_slice "$label" "${slice_ids[index]}" "${slice_modes[index]}" "${slice_starts[index]}" "${slice_ends[index]}" "${slice_hashes[index]}" "${slice_alternates[index]}" "$normalized" "$output"
   done
 }
 

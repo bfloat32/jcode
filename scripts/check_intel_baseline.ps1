@@ -95,8 +95,8 @@ function ConvertFrom-BaselineManifest([string]$ManifestPath) {
     if ($inPaths) { Stop-Guard 'malformed manifest: unterminated required_paths' }
     $rootKeys = @('schema_version', 'signature_slice_schema', 'hash_algorithm', 'slice_order', 'marker_cardinality', 'slice_bounds')
     if (@($root.Keys | Where-Object { $_ -cnotin $rootKeys }).Count -gt 0) { Stop-Guard 'malformed manifest: unsupported top-level key' }
-    if ((Get-ManifestValue $root 'schema_version' 'root') -ne '1') { Stop-Guard 'malformed manifest: unsupported schema_version' }
-    $expectations = [ordered]@{ signature_slice_schema = 'jcode-semantic-slices-v1'; hash_algorithm = 'sha256'; slice_order = 'ascending order field'; marker_cardinality = 'start and end must each match exactly one ASCII-trimmed line'; slice_bounds = 'start inclusive, end exclusive, with start preceding end' }
+    if ((Get-ManifestValue $root 'schema_version' 'root') -cne '2') { Stop-Guard 'malformed manifest: unsupported schema_version' }
+    $expectations = [ordered]@{ signature_slice_schema = 'jcode-semantic-slices-v2'; hash_algorithm = 'sha256'; slice_order = 'ascending order field'; marker_cardinality = 'start and end must each match exactly one ASCII-trimmed line'; slice_bounds = 'start inclusive, end exclusive, with start preceding end' }
     foreach ($key in $expectations.Keys) {
         if ((Get-TomlString (Get-ManifestValue $root $key 'root') "root.$key") -cne $expectations[$key]) { Stop-Guard "malformed manifest: unsupported root.$key" }
     }
@@ -113,9 +113,10 @@ function ConvertFrom-BaselineManifest([string]$ManifestPath) {
     if ($paths.Count -eq 0 -or $slices.Count -eq 0) { Stop-Guard 'malformed manifest: required_paths and signature_slice must be nonempty' }
     $checked = New-Object 'System.Collections.Generic.List[object]'; $orders = New-Object 'System.Collections.Generic.HashSet[long]'; $ids = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::Ordinal); [long]$lastOrder = 0
     foreach ($raw in $slices) {
-        $sliceKeys = @('order', 'id', 'path', 'normalization', 'start_marker', 'end_marker', 'sha256')
-        if (@($raw.Keys | Where-Object { $_ -cnotin $sliceKeys }).Count -gt 0) { Stop-Guard 'malformed manifest: unsupported slice key' }
-        foreach ($key in $sliceKeys) { [void](Get-ManifestValue $raw $key 'signature_slice') }
+        $requiredSliceKeys = @('order', 'id', 'path', 'normalization', 'start_marker', 'end_marker', 'sha256')
+        $allowedSliceKeys = @($requiredSliceKeys) + 'compatible_descendant_sha256'
+        if (@($raw.Keys | Where-Object { $_ -cnotin $allowedSliceKeys }).Count -gt 0) { Stop-Guard 'malformed manifest: unsupported slice key' }
+        foreach ($key in $requiredSliceKeys) { [void](Get-ManifestValue $raw $key 'signature_slice') }
         [long]$order = 0; $rawOrder = Get-ManifestValue $raw 'order' 'signature_slice'
         if ($rawOrder -cnotmatch '^[1-9][0-9]*$' -or -not [long]::TryParse($rawOrder, [ref]$order) -or $order -le $lastOrder -or $orders.Contains($order)) { Stop-Guard 'malformed manifest: slice order is not strictly ascending' }
         $id = Get-TomlString (Get-ManifestValue $raw 'id' 'signature_slice') 'signature_slice.id'
@@ -124,10 +125,15 @@ function ConvertFrom-BaselineManifest([string]$ManifestPath) {
         $start = Get-TomlString (Get-ManifestValue $raw 'start_marker' 'signature_slice') 'signature_slice.start_marker'
         $end = Get-TomlString (Get-ManifestValue $raw 'end_marker' 'signature_slice') 'signature_slice.end_marker'
         $sha256 = Get-TomlString (Get-ManifestValue $raw 'sha256' 'signature_slice') 'signature_slice.sha256'
+        $compatibleDescendantSha256 = $null
+        if ($raw.ContainsKey('compatible_descendant_sha256')) {
+            $compatibleDescendantSha256 = Get-TomlString ([string]$raw['compatible_descendant_sha256']) 'signature_slice.compatible_descendant_sha256'
+            if ($compatibleDescendantSha256 -cnotmatch '^[0-9a-f]{64}$' -or $compatibleDescendantSha256 -ceq $sha256) { Stop-Guard 'malformed manifest: invalid signature_slice compatible descendant hash' }
+        }
         Assert-RepositoryPath $path 'signature_slice.path'
         if ($id -cnotmatch '^[a-z0-9][a-z0-9-]*$' -or -not $ids.Add($id) -or -not $pathSet.Contains($path) -or $mode -cnotin @('rust-v1', 'toml-v1', 'text-v1') -or $start.Length -eq 0 -or $end.Length -eq 0 -or $start -match '[\r\n]' -or $end -match '[\r\n]' -or $sha256 -cnotmatch '^[0-9a-f]{64}$') { Stop-Guard 'malformed manifest: invalid signature_slice' }
         [void]$orders.Add($order); $lastOrder = $order
-        [void]$checked.Add([pscustomobject]@{ Order = $order; Id = $id; Path = $path; Mode = $mode; Start = $start; End = $end; Sha256 = $sha256 })
+        [void]$checked.Add([pscustomobject]@{ Order = $order; Id = $id; Path = $path; Mode = $mode; Start = $start; End = $end; Sha256 = $sha256; CompatibleDescendantSha256 = $compatibleDescendantSha256 })
     }
     $normalExpected = @{ 'rust-v1' = @{ decode = 'strict UTF-8; strip one leading UTF-8 BOM if present'; line_endings = 'replace CRLF and CR with LF'; marker_match = 'exact equality after trimming ASCII space and tab from both ends'; extract = 'include the unique start-marker line; exclude the unique end-marker line'; line_transform = 'trim ASCII space and tab from both ends'; drop_empty_lines = 'true'; drop_line_prefixes = '["//"]'; join = 'LF between retained lines and one terminal LF'; encode = 'UTF-8 without BOM before SHA-256' }; 'toml-v1' = @{ decode = 'strict UTF-8; strip one leading UTF-8 BOM if present'; line_endings = 'replace CRLF and CR with LF'; marker_match = 'exact equality after trimming ASCII space and tab from both ends'; extract = 'include the unique start-marker line; exclude the unique end-marker line'; line_transform = 'trim ASCII space and tab from both ends'; drop_empty_lines = 'true'; drop_line_prefixes = '["#"]'; join = 'LF between retained lines and one terminal LF'; encode = 'UTF-8 without BOM before SHA-256' }; 'text-v1' = @{ decode = 'strict UTF-8; strip one leading UTF-8 BOM if present'; line_endings = 'replace CRLF and CR with LF'; marker_match = 'exact equality after trimming ASCII space and tab from both ends'; extract = 'include the unique start-marker line; exclude the unique end-marker line'; line_transform = 'trim ASCII space and tab from the right only'; drop_empty_lines = 'false'; drop_line_prefixes = '[]'; join = 'LF between retained lines and one terminal LF'; encode = 'UTF-8 without BOM before SHA-256' } }
     $normalKeys = @('decode', 'line_endings', 'marker_match', 'extract', 'line_transform', 'drop_empty_lines', 'drop_line_prefixes', 'join', 'encode')
@@ -219,7 +225,7 @@ try {
             }
             $result = Get-SliceResult $contents[$slice.Path] $slice $target.Label
             if ($result.Error) { [void]$errors.Add($result.Error) }
-            elseif ($result.Hash -cne $slice.Sha256) { [void]$errors.Add("$($target.Label) signature $($slice.Id): SHA-256 mismatch") }
+            elseif ($result.Hash -cne $slice.Sha256 -and ($target.Label -cne 'current' -or $null -eq $slice.CompatibleDescendantSha256 -or $result.Hash -cne $slice.CompatibleDescendantSha256)) { [void]$errors.Add("$($target.Label) signature $($slice.Id): SHA-256 mismatch") }
         }
     }
     if ($errors.Count -gt 0) { foreach ($diagnostic in $errors) { [Console]::Error.WriteLine("check_intel_baseline: $diagnostic") }; exit 2 }
