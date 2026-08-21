@@ -1,0 +1,12 @@
+[package]
+name = "jcode-intel-core"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+jcode-intel-types = { path = "../jcode-intel-types" }
+jcode-intel-store = { path = "../jcode-intel-store" }
+jcode-intel-search = { path = "../jcode-intel-search" }
+jcode-intel-provider = { path = "../jcode-intel-provider" }
+jcode-intel-rust = { path = "../jcode-intel-rust" }
