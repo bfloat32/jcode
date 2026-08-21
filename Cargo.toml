@@ -91,6 +91,13 @@ members = [
     "crates/jcode-telemetry-core",
     "crates/jcode-tui-workspace",
     "crates/jcode-render-core",
+    "crates/jcode-intel-types",
+    "crates/jcode-intel-store",
+    "crates/jcode-intel-search",
+    "crates/jcode-intel-provider",
+    "crates/jcode-intel-rust",
+    "crates/jcode-intel-core",
+    "crates/jcode-intel-eval",
 ]
 
 [lib]
