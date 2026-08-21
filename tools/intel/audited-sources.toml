@@ -1,0 +1,716 @@
+schema_version = 1
+manifest_version = "1.0.0"
+verified_on = "2026-08-17"
+required_source_count = 16
+canonical_revision_format = "git_sha1_40_lower_hex"
+default_reuse_class = "reference_only_independent_implementation"
+default_direct_source_approved = false
+audit_documents = [
+  "2026-08-16-jcode-feeder-repo-second-pass-audit.md",
+  "2026-08-16-jcode-verification-and-search-feeder-audit.md",
+]
+audit_commit = "fc6e423a48eed593f8f14d6d2e6976ced1e24ad4"
+verification_sessions = [
+  "ses_ff36e2ac7ffeeL7d1B44JBz2FE",
+  "ses_ff36e2a8affeDAk4D8PyRlcmtz",
+]
+
+[schema]
+reuse_classes = ["reference_only_independent_implementation"]
+license_identifiers = [
+  "AGPL-3.0-or-later",
+  "Apache-2.0",
+  "BSD-4-Clause",
+  "CC0-1.0",
+  "MIT",
+  "MPL-2.0",
+  "NOASSERTION",
+  "Unlicense",
+]
+maintenance_decisions = [
+  "active_reference_only",
+  "stale_reference_only",
+  "archived_lineage_reference_only",
+]
+license_review_statuses = [
+  "verified",
+  "verified_with_nested_exceptions",
+  "verified_primary_incomplete_dependency_closure",
+  "unresolved_repository_wide_expression",
+]
+release_context_statuses = ["matches_revision", "mismatches_revision", "not_recorded", "no_tagged_release"]
+
+[[source]]
+id = "hotpath-rs"
+repository_url = "https://github.com/pawurb/hotpath-rs"
+canonical_revision = "c7b64cadb337a0b79e5b1ddcbc1fbc9fb47d1b3e"
+canonical_revision_url = "https://github.com/pawurb/hotpath-rs/commit/c7b64cadb337a0b79e5b1ddcbc1fbc9fb47d1b3e"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-feeder-repo-second-pass-audit.md"
+audit_role = "T4 telemetry and comparison"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "MIT"
+license_review_status = "verified"
+license_evidence_urls = [
+  "https://github.com/pawurb/hotpath-rs/blob/c7b64cadb337a0b79e5b1ddcbc1fbc9fb47d1b3e/LICENSE.txt",
+]
+source_evidence_urls = [
+  "https://github.com/pawurb/hotpath-rs/blob/c7b64cadb337a0b79e5b1ddcbc1fbc9fb47d1b3e/crates/hotpath/src/lib_on/channels.rs",
+  "https://github.com/pawurb/hotpath-rs/blob/c7b64cadb337a0b79e5b1ddcbc1fbc9fb47d1b3e/crates/hotpath/src/lib_on/hotpath_guard.rs",
+  "https://github.com/pawurb/hotpath-rs/blob/c7b64cadb337a0b79e5b1ddcbc1fbc9fb47d1b3e/crates/hotpath/bin/hotpath-utils/cmd/compare.rs",
+]
+release_context = "not recorded by audit"
+release_context_status = "not_recorded"
+unresolved_review_facts = []
+notes = ["Repository metadata was archived=false, disabled=false, fork=false; last push observed 2026-08-15."]
+
+[[source]]
+id = "dylint"
+repository_url = "https://github.com/trailofbits/dylint"
+canonical_revision = "d090163cdd2c3e92d40029ca5ae5f4391f40389f"
+canonical_revision_url = "https://github.com/trailofbits/dylint/commit/d090163cdd2c3e92d40029ca5ae5f4391f40389f"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-feeder-repo-second-pass-audit.md"
+audit_role = "T3 lint runtime and toolchain isolation"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "MIT OR Apache-2.0"
+license_review_status = "verified"
+license_evidence_urls = [
+  "https://github.com/trailofbits/dylint/blob/d090163cdd2c3e92d40029ca5ae5f4391f40389f/LICENSE-MIT",
+  "https://github.com/trailofbits/dylint/blob/d090163cdd2c3e92d40029ca5ae5f4391f40389f/LICENSE-APACHE",
+]
+source_evidence_urls = [
+  "https://github.com/trailofbits/dylint/blob/d090163cdd2c3e92d40029ca5ae5f4391f40389f/dylint/src/driver_builder.rs",
+  "https://github.com/trailofbits/dylint/blob/d090163cdd2c3e92d40029ca5ae5f4391f40389f/utils/testing/src/ui.rs",
+]
+release_context = "not recorded by audit"
+release_context_status = "not_recorded"
+unresolved_review_facts = []
+notes = ["Repository metadata was archived=false, disabled=false, fork=false; last push observed 2026-08-16."]
+
+[[source]]
+id = "rust-relations-explorer"
+repository_url = "https://github.com/automataIA/rust-relations-explorer"
+canonical_revision = "77dfbd27f1d5843c143dda37acfe2bd1e594e04b"
+canonical_revision_url = "https://github.com/automataIA/rust-relations-explorer/commit/77dfbd27f1d5843c143dda37acfe2bd1e594e04b"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-feeder-repo-second-pass-audit.md"
+audit_role = "Graph exploration UX"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "stale_not_archived"
+maintenance_decision = "stale_reference_only"
+license_spdx = "MIT OR Apache-2.0"
+license_review_status = "verified"
+license_evidence_urls = [
+  "https://github.com/automataIA/rust-relations-explorer/blob/77dfbd27f1d5843c143dda37acfe2bd1e594e04b/LICENSE-MIT",
+  "https://github.com/automataIA/rust-relations-explorer/blob/77dfbd27f1d5843c143dda37acfe2bd1e594e04b/LICENSE-APACHE",
+]
+source_evidence_urls = [
+  "https://github.com/automataIA/rust-relations-explorer/blob/77dfbd27f1d5843c143dda37acfe2bd1e594e04b/src/parser/mod.rs",
+  "https://github.com/automataIA/rust-relations-explorer/blob/77dfbd27f1d5843c143dda37acfe2bd1e594e04b/src/query/mod.rs",
+]
+release_context = "not recorded by audit"
+release_context_status = "not_recorded"
+unresolved_review_facts = []
+notes = ["Repository metadata was not archived; last push observed 2025-08-22, outside the 90-day active window."]
+
+[[source]]
+id = "scip-callgraph"
+repository_url = "https://github.com/Beneficial-AI-Foundation/scip-callgraph"
+canonical_revision = "6f908025c0de4a2d2abd0619821a5606d8d84a14"
+canonical_revision_url = "https://github.com/Beneficial-AI-Foundation/scip-callgraph/commit/6f908025c0de4a2d2abd0619821a5606d8d84a14"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-feeder-repo-second-pass-audit.md"
+audit_role = "Query algebra and proof-call context"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "NOASSERTION"
+license_review_status = "unresolved_repository_wide_expression"
+license_evidence_urls = [
+  "https://github.com/Beneficial-AI-Foundation/scip-callgraph/blob/6f908025c0de4a2d2abd0619821a5606d8d84a14/Cargo.toml",
+  "https://github.com/Beneficial-AI-Foundation/scip-callgraph/blob/6f908025c0de4a2d2abd0619821a5606d8d84a14/pyproject.toml",
+]
+source_evidence_urls = [
+  "https://github.com/Beneficial-AI-Foundation/scip-callgraph/blob/6f908025c0de4a2d2abd0619821a5606d8d84a14/crates/scip-core/src/call_graph.rs",
+  "https://github.com/Beneficial-AI-Foundation/scip-callgraph/blob/6f908025c0de4a2d2abd0619821a5606d8d84a14/web/src/query.ts",
+  "https://github.com/Beneficial-AI-Foundation/scip-callgraph/blob/6f908025c0de4a2d2abd0619821a5606d8d84a14/crates/scip-core/src/scip_reader.rs",
+]
+release_context = "not recorded by audit"
+release_context_status = "not_recorded"
+unresolved_review_facts = [
+  "No repository-wide primary LICENSE, COPYING, or NOTICE exists at the canonical revision.",
+  "Rust metadata declares MIT OR Apache-2.0 while Python metadata declares MIT; repository-wide scope is unresolved.",
+  "The verus_lemma_finder gitlink has no verified license file or classifier.",
+  "The probe-verus Git dependency is mutable and dependency-license closure is incomplete.",
+]
+notes = ["Repository metadata was archived=false, disabled=false, fork=false; last push observed 2026-06-03."]
+
+[[source.nested_component]]
+id = "verus-lemma-finder"
+path = "verus_lemma_finder"
+repository_url = "https://github.com/Beneficial-AI-Foundation/verus_lemma_finder"
+revision = "dbd52ec3a1b2dc5671d0c4df67c0563f5e03476a"
+revision_url = "https://github.com/Beneficial-AI-Foundation/verus_lemma_finder/commit/dbd52ec3a1b2dc5671d0c4df67c0563f5e03476a"
+license_spdx = "NOASSERTION"
+license_review_status = "unresolved_repository_wide_expression"
+evidence_urls = [
+  "https://github.com/Beneficial-AI-Foundation/scip-callgraph/blob/6f908025c0de4a2d2abd0619821a5606d8d84a14/.gitmodules",
+]
+notes = ["The pinned gitlink resolves, but no license file or GitHub license classifier was verified."]
+
+[[source.mutable_input]]
+id = "probe-verus"
+kind = "git_dependency_without_immutable_revision"
+evidence_url = "https://github.com/Beneficial-AI-Foundation/scip-callgraph/blob/6f908025c0de4a2d2abd0619821a5606d8d84a14/Cargo.toml"
+review_status = "unresolved"
+
+[[source]]
+id = "rapx"
+repository_url = "https://github.com/safer-rust/RAPx"
+canonical_revision = "b0d88a997a353ed654ccc4c49389ed48c5a0432d"
+canonical_revision_url = "https://github.com/safer-rust/RAPx/commit/b0d88a997a353ed654ccc4c49389ed48c5a0432d"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-feeder-repo-second-pass-audit.md"
+audit_role = "T3 MIR, unsafe, alias, and solver analysis"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "MPL-2.0"
+license_review_status = "verified"
+license_evidence_urls = [
+  "https://github.com/safer-rust/RAPx/blob/b0d88a997a353ed654ccc4c49389ed48c5a0432d/LICENSE-MPL",
+  "https://github.com/safer-rust/RAPx/blob/b0d88a997a353ed654ccc4c49389ed48c5a0432d/Cargo.toml",
+]
+source_evidence_urls = [
+  "https://github.com/safer-rust/RAPx/blob/b0d88a997a353ed654ccc4c49389ed48c5a0432d/rapx/src/analysis/callgraph/default.rs",
+  "https://github.com/safer-rust/RAPx/blob/b0d88a997a353ed654ccc4c49389ed48c5a0432d/rapx/src/analysis/safety_flow/mod.rs",
+  "https://github.com/safer-rust/RAPx/blob/b0d88a997a353ed654ccc4c49389ed48c5a0432d/rapx/src/verify/contract/mod.rs",
+]
+release_context = "not recorded by audit"
+release_context_status = "not_recorded"
+unresolved_review_facts = []
+notes = ["Any future code reuse requires separate MPL-2.0 review."]
+
+[[source]]
+id = "codestory"
+repository_url = "https://github.com/TheGreenCedar/CodeStory"
+canonical_revision = "088cfe3a393efff9a4e1ff8d70dbb7166dd7a0fe"
+canonical_revision_url = "https://github.com/TheGreenCedar/CodeStory/commit/088cfe3a393efff9a4e1ff8d70dbb7166dd7a0fe"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-feeder-repo-second-pass-audit.md"
+audit_role = "Retrieval sufficiency and evidence qualification"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "Apache-2.0"
+license_review_status = "verified_with_nested_exceptions"
+license_evidence_urls = [
+  "https://github.com/TheGreenCedar/CodeStory/blob/088cfe3a393efff9a4e1ff8d70dbb7166dd7a0fe/LICENSE",
+]
+source_evidence_urls = [
+  "https://github.com/TheGreenCedar/CodeStory/blob/088cfe3a393efff9a4e1ff8d70dbb7166dd7a0fe/crates/codestory-retrieval/src/candidate.rs",
+  "https://github.com/TheGreenCedar/CodeStory/blob/088cfe3a393efff9a4e1ff8d70dbb7166dd7a0fe/crates/codestory-retrieval/src/planner.rs",
+  "https://github.com/TheGreenCedar/CodeStory/tree/088cfe3a393efff9a4e1ff8d70dbb7166dd7a0fe/benchmarks/tasks",
+]
+release_context = "not recorded by audit"
+release_context_status = "not_recorded"
+unresolved_review_facts = []
+notes = ["The vendored tree-sitter-graph license must not be collapsed into the root Apache-2.0 license."]
+
+[[source.nested_component]]
+id = "tree-sitter-graph"
+path = "vendor/tree-sitter-graph"
+repository_url = "https://github.com/TheGreenCedar/CodeStory"
+revision = "088cfe3a393efff9a4e1ff8d70dbb7166dd7a0fe"
+revision_url = "https://github.com/TheGreenCedar/CodeStory/tree/088cfe3a393efff9a4e1ff8d70dbb7166dd7a0fe/vendor/tree-sitter-graph"
+license_spdx = "MIT OR Apache-2.0"
+license_review_status = "verified"
+evidence_urls = [
+  "https://github.com/TheGreenCedar/CodeStory/blob/088cfe3a393efff9a4e1ff8d70dbb7166dd7a0fe/vendor/tree-sitter-graph/LICENSE-MIT",
+  "https://github.com/TheGreenCedar/CodeStory/blob/088cfe3a393efff9a4e1ff8d70dbb7166dd7a0fe/vendor/tree-sitter-graph/LICENSE-APACHE",
+]
+notes = ["Vendored component with a license expression distinct from the root project."]
+
+[[source]]
+id = "wild"
+repository_url = "https://github.com/wild-linker/wild"
+canonical_revision = "49a0041adec129bb12e6ebcf4f3f6e31a7fc5088"
+canonical_revision_url = "https://github.com/wild-linker/wild/commit/49a0041adec129bb12e6ebcf4f3f6e31a7fc5088"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-feeder-repo-second-pass-audit.md"
+audit_role = "T4 link explanation and differential certificates"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "MIT OR Apache-2.0"
+license_review_status = "verified_with_nested_exceptions"
+license_evidence_urls = [
+  "https://github.com/wild-linker/wild/blob/49a0041adec129bb12e6ebcf4f3f6e31a7fc5088/Cargo.toml",
+  "https://github.com/wild-linker/wild/blob/49a0041adec129bb12e6ebcf4f3f6e31a7fc5088/LICENSE-MIT",
+  "https://github.com/wild-linker/wild/blob/49a0041adec129bb12e6ebcf4f3f6e31a7fc5088/LICENSE-APACHE",
+]
+source_evidence_urls = [
+  "https://github.com/wild-linker/wild/blob/49a0041adec129bb12e6ebcf4f3f6e31a7fc5088/libwild/src/save_dir.rs",
+  "https://github.com/wild-linker/wild/blob/49a0041adec129bb12e6ebcf4f3f6e31a7fc5088/libwild/src/validation.rs",
+  "https://github.com/wild-linker/wild/tree/49a0041adec129bb12e6ebcf4f3f6e31a7fc5088/linker-diff/src",
+]
+release_context = "not recorded by audit"
+release_context_status = "not_recorded"
+unresolved_review_facts = ["Fixture-to-license scope inside the test-files gitlink was not verified."]
+notes = ["The mold and test-files gitlinks are separately licensed and are not covered by the parent dual-license declaration."]
+
+[[source.nested_component]]
+id = "mold"
+path = "mold"
+repository_url = "https://github.com/rui314/mold"
+revision = "3eca43961ddc8a5f6c670358cda2be8d326a5f96"
+revision_url = "https://github.com/rui314/mold/commit/3eca43961ddc8a5f6c670358cda2be8d326a5f96"
+license_spdx = "NOASSERTION"
+license_review_status = "unresolved_repository_wide_expression"
+evidence_urls = ["https://github.com/wild-linker/wild/blob/49a0041adec129bb12e6ebcf4f3f6e31a7fc5088/.gitmodules"]
+notes = ["Pinned gitlink recorded; its license was not closed by this audit."]
+
+[[source.nested_component]]
+id = "test-files"
+path = "test-files"
+repository_url = "https://github.com/wild-linker/test-files"
+revision = "6b9fe565a88a19d8d0b8c52eae9eb8c443872aa4"
+revision_url = "https://github.com/wild-linker/test-files/commit/6b9fe565a88a19d8d0b8c52eae9eb8c443872aa4"
+license_spdx = "NOASSERTION"
+license_review_status = "unresolved_repository_wide_expression"
+evidence_urls = [
+  "https://github.com/wild-linker/wild/blob/49a0041adec129bb12e6ebcf4f3f6e31a7fc5088/.gitmodules",
+  "https://github.com/wild-linker/test-files/tree/6b9fe565a88a19d8d0b8c52eae9eb8c443872aa4",
+]
+notes = ["Apache, CDDL, LGPL-2.1, and MIT files exist, but individual fixture scope remains unresolved."]
+
+[[source]]
+id = "egent-code-plexus"
+repository_url = "https://github.com/coseto6125/egent-code-plexus"
+canonical_revision = "504adda2a5c604c6d76b5cdc6e2cda4863597deb"
+canonical_revision_url = "https://github.com/coseto6125/egent-code-plexus/commit/504adda2a5c604c6d76b5cdc6e2cda4863597deb"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-feeder-repo-second-pass-audit.md"
+audit_role = "Blind spots, overlays, capability guidance"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "MIT"
+license_review_status = "verified_with_nested_exceptions"
+license_evidence_urls = [
+  "https://github.com/coseto6125/egent-code-plexus/blob/504adda2a5c604c6d76b5cdc6e2cda4863597deb/LICENSE",
+  "https://github.com/coseto6125/egent-code-plexus/blob/504adda2a5c604c6d76b5cdc6e2cda4863597deb/LICENSES/NOTICES.md",
+]
+source_evidence_urls = [
+  "https://github.com/coseto6125/egent-code-plexus/blob/504adda2a5c604c6d76b5cdc6e2cda4863597deb/crates/ecp-cli/src/commands/contracts.rs",
+  "https://github.com/coseto6125/egent-code-plexus/blob/504adda2a5c604c6d76b5cdc6e2cda4863597deb/crates/ecp-core/src/session/overlay.rs",
+  "https://github.com/coseto6125/egent-code-plexus/blob/504adda2a5c604c6d76b5cdc6e2cda4863597deb/docs/parity-verification/README.md",
+]
+release_context = "not recorded by audit"
+release_context_status = "not_recorded"
+unresolved_review_facts = [
+  "The repository assertion that no GitNexus code was copied was not independently proven.",
+  "The repository assertion that no GPL-family dependency is present was not independently proven.",
+  "The cited tree-sitter-move upstream URL returned 404, so its archived status was not verified.",
+  "The claimed absence of a public tree-sitter-vyper upstream was not verifiable as a negative.",
+]
+notes = ["Vendored grammar licenses override the root license for their scoped material."]
+
+[[source.nested_component]]
+id = "vendored-tree-sitter-grammars"
+path = "crates/vendor"
+repository_url = "https://github.com/coseto6125/egent-code-plexus"
+revision = "504adda2a5c604c6d76b5cdc6e2cda4863597deb"
+revision_url = "https://github.com/coseto6125/egent-code-plexus/tree/504adda2a5c604c6d76b5cdc6e2cda4863597deb/crates/vendor"
+license_spdx = "MIT AND MPL-2.0 AND CC0-1.0"
+license_review_status = "verified_with_nested_exceptions"
+evidence_urls = [
+  "https://github.com/coseto6125/egent-code-plexus/blob/504adda2a5c604c6d76b5cdc6e2cda4863597deb/crates/vendor/tree-sitter-nim/REUSE.toml",
+  "https://github.com/coseto6125/egent-code-plexus/blob/504adda2a5c604c6d76b5cdc6e2cda4863597deb/crates/vendor/tree-sitter-vue/ThirdPartyNoticeText.txt",
+]
+notes = [
+  "astro, cairo, move, svelte, swift, vue, and vyper carry MIT licenses.",
+  "nim carries MPL-2.0, with CC0-1.0 metadata and MIT-scoped headers, pkg-config files, and samples recorded by REUSE metadata.",
+]
+
+[[source]]
+id = "fast-file-search"
+repository_url = "https://github.com/quangdang46/fast_file_search"
+canonical_revision = "88f13bf6c72e3bfed9be2af945aec067b930a7b2"
+canonical_revision_url = "https://github.com/quangdang46/fast_file_search/commit/88f13bf6c72e3bfed9be2af945aec067b930a7b2"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-feeder-repo-second-pass-audit.md"
+audit_role = "Token-bounded lexical and structural retrieval"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "MIT"
+license_review_status = "verified_with_nested_exceptions"
+license_evidence_urls = [
+  "https://github.com/quangdang46/fast_file_search/blob/88f13bf6c72e3bfed9be2af945aec067b930a7b2/LICENSE",
+]
+source_evidence_urls = [
+  "https://github.com/quangdang46/fast_file_search/blob/88f13bf6c72e3bfed9be2af945aec067b930a7b2/crates/ffs-budget/src/cascade.rs",
+  "https://github.com/quangdang46/fast_file_search/blob/88f13bf6c72e3bfed9be2af945aec067b930a7b2/crates/ffs-cli/src/commands/pagination.rs",
+  "https://github.com/quangdang46/fast_file_search/blob/88f13bf6c72e3bfed9be2af945aec067b930a7b2/crates/ffs-cli/src/commands/flow.rs",
+]
+release_context = "not recorded by audit"
+release_context_status = "not_recorded"
+unresolved_review_facts = []
+notes = ["The vendored tree-sitter-verse license is separately recorded."]
+
+[[source.nested_component]]
+id = "tree-sitter-verse"
+path = "vendor/tree-sitter-verse"
+repository_url = "https://github.com/quangdang46/fast_file_search"
+revision = "88f13bf6c72e3bfed9be2af945aec067b930a7b2"
+revision_url = "https://github.com/quangdang46/fast_file_search/tree/88f13bf6c72e3bfed9be2af945aec067b930a7b2/vendor/tree-sitter-verse"
+license_spdx = "MIT"
+license_review_status = "verified"
+evidence_urls = [
+  "https://github.com/quangdang46/fast_file_search/blob/88f13bf6c72e3bfed9be2af945aec067b930a7b2/vendor/tree-sitter-verse/LICENSE",
+]
+notes = ["Demo JSON copies of license text are not separate grants."]
+
+[[source]]
+id = "synaptic"
+repository_url = "https://github.com/ColinVaughn/Synaptic"
+canonical_revision = "495eb2378f25a47edce230857cc955bee3555089"
+canonical_revision_url = "https://github.com/ColinVaughn/Synaptic/commit/495eb2378f25a47edce230857cc955bee3555089"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-feeder-repo-second-pass-audit.md"
+audit_role = "Agent installation, memory, evaluation, safe change workflows"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "AGPL-3.0-or-later"
+license_review_status = "verified_primary_incomplete_dependency_closure"
+license_evidence_urls = [
+  "https://github.com/ColinVaughn/Synaptic/blob/495eb2378f25a47edce230857cc955bee3555089/Cargo.toml",
+  "https://github.com/ColinVaughn/Synaptic/blob/495eb2378f25a47edce230857cc955bee3555089/LICENSE",
+  "https://github.com/ColinVaughn/Synaptic/blob/495eb2378f25a47edce230857cc955bee3555089/NOTICE",
+]
+source_evidence_urls = [
+  "https://github.com/ColinVaughn/Synaptic/tree/495eb2378f25a47edce230857cc955bee3555089/crates/synaptic-skillgen",
+  "https://github.com/ColinVaughn/Synaptic/blob/495eb2378f25a47edce230857cc955bee3555089/crates/synaptic-memory/src/model.rs",
+  "https://github.com/ColinVaughn/Synaptic/blob/495eb2378f25a47edce230857cc955bee3555089/crates/synaptic-eval/src/calibrate.rs",
+  "https://github.com/ColinVaughn/Synaptic/blob/495eb2378f25a47edce230857cc955bee3555089/crates/synaptic-api/src/patch_policy.rs",
+  "https://github.com/ColinVaughn/Synaptic/blob/495eb2378f25a47edce230857cc955bee3555089/crates/synaptic-api/src/coverage.rs",
+]
+release_context = "not recorded by audit"
+release_context_status = "not_recorded"
+unresolved_review_facts = [
+  "NOTICE references generated THIRD_PARTY_LICENSES.html, but that artifact is absent at the canonical revision.",
+  "Third-party dependency-license closure is incomplete.",
+]
+notes = ["No direct reuse is approved without a separate AGPL-3.0-or-later review."]
+
+[[source]]
+id = "crabgrind"
+repository_url = "https://github.com/2dav/crabgrind"
+canonical_revision = "ea38389bdf0731866d812352c11a921c6c657d5d"
+canonical_revision_url = "https://github.com/2dav/crabgrind/commit/ea38389bdf0731866d812352c11a921c6c657d5d"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-feeder-repo-second-pass-audit.md"
+audit_role = "Valgrind client instrumentation"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "MIT"
+license_review_status = "verified_with_nested_exceptions"
+license_evidence_urls = [
+  "https://github.com/2dav/crabgrind/blob/ea38389bdf0731866d812352c11a921c6c657d5d/Cargo.toml",
+  "https://github.com/2dav/crabgrind/blob/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/MIT.LICENSE",
+]
+source_evidence_urls = [
+  "https://github.com/2dav/crabgrind/blob/ea38389bdf0731866d812352c11a921c6c657d5d/src/requests/mod.rs",
+  "https://github.com/2dav/crabgrind/blob/ea38389bdf0731866d812352c11a921c6c657d5d/src/requests/memcheck.rs",
+  "https://github.com/2dav/crabgrind/blob/ea38389bdf0731866d812352c11a921c6c657d5d/tests/common/mod.rs",
+]
+release_context = "not recorded by audit"
+release_context_status = "not_recorded"
+unresolved_review_facts = []
+notes = ["Project MIT licensing does not cover the separately licensed Valgrind headers."]
+
+[[source.nested_component]]
+id = "valgrind-client-headers"
+path = "LICENSE/*.h.LICENSE"
+repository_url = "https://github.com/2dav/crabgrind"
+revision = "ea38389bdf0731866d812352c11a921c6c657d5d"
+revision_url = "https://github.com/2dav/crabgrind/tree/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE"
+license_spdx = "BSD-4-Clause"
+license_review_status = "verified"
+evidence_urls = [
+  "https://github.com/2dav/crabgrind/blob/ea38389bdf0731866d812352c11a921c6c657d5d/LICENSE/cachegrind.h.LICENSE",
+]
+notes = ["The scoped license applies separately to cachegrind.h, callgrind.h, dhat.h, drd.h, helgrind.h, memcheck.h, and valgrind.h."]
+
+[[source]]
+id = "amber"
+repository_url = "https://github.com/dalance/amber"
+canonical_revision = "2fc63dc489397795d9b638c098acb7e17323d80d"
+canonical_revision_url = "https://github.com/dalance/amber/commit/2fc63dc489397795d9b638c098acb7e17323d80d"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-feeder-repo-second-pass-audit.md"
+audit_role = "Parallel search and per-file replacement patterns"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "MIT"
+license_review_status = "verified"
+license_evidence_urls = [
+  "https://github.com/dalance/amber/blob/2fc63dc489397795d9b638c098acb7e17323d80d/Cargo.toml",
+  "https://github.com/dalance/amber/blob/2fc63dc489397795d9b638c098acb7e17323d80d/LICENSE",
+]
+source_evidence_urls = [
+  "https://github.com/dalance/amber/blob/2fc63dc489397795d9b638c098acb7e17323d80d/src/pipeline.rs",
+  "https://github.com/dalance/amber/blob/2fc63dc489397795d9b638c098acb7e17323d80d/src/pipeline_sorter.rs",
+  "https://github.com/dalance/amber/blob/2fc63dc489397795d9b638c098acb7e17323d80d/src/pipeline_replacer.rs",
+]
+release_context = "not recorded by audit"
+release_context_status = "not_recorded"
+unresolved_review_facts = []
+notes = ["Repository metadata was archived=false, disabled=false, fork=false; last push observed 2026-08-07."]
+
+[[source]]
+id = "verus"
+repository_url = "https://github.com/verus-lang/verus"
+canonical_revision = "7d4628a8543d3e51e6e314c52032c9bab43f0f53"
+canonical_revision_url = "https://github.com/verus-lang/verus/commit/7d4628a8543d3e51e6e314c52032c9bab43f0f53"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-verification-and-search-feeder-audit.md"
+audit_role = "T3 deductive verification"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "MIT"
+license_review_status = "verified_with_nested_exceptions"
+license_evidence_urls = [
+  "https://github.com/verus-lang/verus/blob/7d4628a8543d3e51e6e314c52032c9bab43f0f53/LICENSE",
+]
+source_evidence_urls = [
+  "https://github.com/verus-lang/verus/tree/7d4628a8543d3e51e6e314c52032c9bab43f0f53/source/rust_verify/src",
+  "https://github.com/verus-lang/verus/tree/7d4628a8543d3e51e6e314c52032c9bab43f0f53/source/air/src",
+  "https://github.com/verus-lang/verus/tree/7d4628a8543d3e51e6e314c52032c9bab43f0f53/source/vir/src",
+  "https://github.com/verus-lang/verus/tree/7d4628a8543d3e51e6e314c52032c9bab43f0f53/source/state_machines_macros/src",
+  "https://github.com/verus-lang/verus/blob/7d4628a8543d3e51e6e314c52032c9bab43f0f53/source/rust_verify/src/buckets.rs",
+  "https://github.com/verus-lang/verus/blob/7d4628a8543d3e51e6e314c52032c9bab43f0f53/source/rust_verify/src/user_filter.rs",
+  "https://github.com/verus-lang/verus/blob/7d4628a8543d3e51e6e314c52032c9bab43f0f53/source/rust_verify/src/profiler.rs",
+  "https://github.com/verus-lang/verus/blob/7d4628a8543d3e51e6e314c52032c9bab43f0f53/source/verus/src/record.rs",
+  "https://github.com/verus-lang/verus/blob/7d4628a8543d3e51e6e314c52032c9bab43f0f53/source/verus/src/record_history.rs",
+  "https://github.com/verus-lang/verus/blob/7d4628a8543d3e51e6e314c52032c9bab43f0f53/source/rust_verify_test/tests/output_json.rs",
+]
+release_context = "rolling release 2026-08-15"
+release_context_status = "matches_revision"
+release_context_url = "https://github.com/verus-lang/verus/releases/tag/release%2Frolling%2F0.2026.08.15.7d4628a"
+unresolved_review_facts = [
+  "Repository SHA alone does not close build provenance because source/Cargo.toml uses a mutable getopts branch.",
+  "Nested Rust-origin and vendored packages have licenses distinct from the root MIT license.",
+]
+notes = ["The root license is MIT; nested dual-license material is separately recorded."]
+
+[[source.nested_component]]
+id = "vendored-rust-components"
+path = "dependencies and source rustc-derived components"
+repository_url = "https://github.com/verus-lang/verus"
+revision = "7d4628a8543d3e51e6e314c52032c9bab43f0f53"
+revision_url = "https://github.com/verus-lang/verus/tree/7d4628a8543d3e51e6e314c52032c9bab43f0f53"
+license_spdx = "MIT OR Apache-2.0"
+license_review_status = "verified"
+evidence_urls = [
+  "https://github.com/verus-lang/verus/blob/7d4628a8543d3e51e6e314c52032c9bab43f0f53/dependencies/prettyplease/Cargo.toml",
+  "https://github.com/verus-lang/verus/blob/7d4628a8543d3e51e6e314c52032c9bab43f0f53/dependencies/syn/Cargo.toml",
+]
+notes = ["prettyplease, syn, rustc_hir_typeck, and rustc_mir_build carry MIT and Apache-2.0 license files."]
+
+[[source.mutable_input]]
+id = "getopts-parse-partial"
+kind = "git_dependency_branch"
+evidence_url = "https://github.com/verus-lang/verus/blob/7d4628a8543d3e51e6e314c52032c9bab43f0f53/source/Cargo.toml"
+review_status = "unresolved"
+notes = ["getopts is selected by mutable branch parse-partial."]
+
+[[source]]
+id = "ripgrep"
+repository_url = "https://github.com/BurntSushi/ripgrep"
+canonical_revision = "3fce3b5bb0236da2df6d99672afb8a719642eca7"
+canonical_revision_url = "https://github.com/BurntSushi/ripgrep/commit/3fce3b5bb0236da2df6d99672afb8a719642eca7"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-verification-and-search-feeder-audit.md"
+audit_role = "T0 discovery and exact search"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "Unlicense OR MIT"
+license_review_status = "verified_with_nested_exceptions"
+license_evidence_urls = [
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/Cargo.toml",
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/COPYING",
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/LICENSE-MIT",
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/UNLICENSE",
+]
+source_evidence_urls = [
+  "https://github.com/BurntSushi/ripgrep/tree/3fce3b5bb0236da2df6d99672afb8a719642eca7/crates",
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/crates/searcher/src/sink.rs",
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/crates/ignore/src/walk.rs",
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/crates/ignore/src/dir.rs",
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/crates/core/flags/hiargs.rs",
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/crates/searcher/src/searcher/mod.rs",
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/crates/searcher/src/searcher/mmap.rs",
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/crates/printer/src/json.rs",
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/crates/cli/src/decompress.rs",
+]
+release_context = "15.2.0, 2026-07-15"
+release_context_status = "mismatches_revision"
+release_context_url = "https://github.com/BurntSushi/ripgrep/releases/tag/15.2.0"
+unresolved_review_facts = []
+notes = [
+  "The 15.2.0 release tag identifies a different commit; the later audited SHA remains canonical.",
+  "GitHub license detection reports NOASSERTION for the dual license, while Cargo and COPYING explicitly declare Unlicense OR MIT.",
+]
+
+[[source.nested_component]]
+id = "workspace-crates"
+path = "crates"
+repository_url = "https://github.com/BurntSushi/ripgrep"
+revision = "3fce3b5bb0236da2df6d99672afb8a719642eca7"
+revision_url = "https://github.com/BurntSushi/ripgrep/tree/3fce3b5bb0236da2df6d99672afb8a719642eca7/crates"
+license_spdx = "Unlicense OR MIT"
+license_review_status = "verified"
+evidence_urls = [
+  "https://github.com/BurntSushi/ripgrep/blob/3fce3b5bb0236da2df6d99672afb8a719642eca7/crates/ignore/COPYING",
+]
+notes = ["Nested crate license files repeat the root Unlicense OR MIT pair."]
+
+[[source]]
+id = "rudra"
+repository_url = "https://github.com/shinmao/Rudra"
+canonical_revision = "cb1ea83514410da599e0b1abfcc6d558e1ebd1a8"
+canonical_revision_url = "https://github.com/shinmao/Rudra/commit/cb1ea83514410da599e0b1abfcc6d558e1ebd1a8"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-verification-and-search-feeder-audit.md"
+audit_role = "T3 unsafe-risk screen"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_fork_of_archived_parent"
+maintenance_decision = "archived_lineage_reference_only"
+license_spdx = "NOASSERTION"
+license_review_status = "unresolved_repository_wide_expression"
+license_evidence_urls = [
+  "https://github.com/shinmao/Rudra/blob/cb1ea83514410da599e0b1abfcc6d558e1ebd1a8/LICENSE-APACHE",
+  "https://github.com/shinmao/Rudra/blob/cb1ea83514410da599e0b1abfcc6d558e1ebd1a8/LICENSE-MIT",
+  "https://github.com/shinmao/Rudra/blob/cb1ea83514410da599e0b1abfcc6d558e1ebd1a8/Cargo.toml",
+]
+source_evidence_urls = [
+  "https://github.com/shinmao/Rudra/blob/cb1ea83514410da599e0b1abfcc6d558e1ebd1a8/src/analysis/unsafe_dataflow.rs",
+  "https://github.com/shinmao/Rudra/blob/cb1ea83514410da599e0b1abfcc6d558e1ebd1a8/src/analysis/unsafe_destructor.rs",
+  "https://github.com/shinmao/Rudra/tree/cb1ea83514410da599e0b1abfcc6d558e1ebd1a8/src/analysis/send_sync_variance",
+  "https://github.com/shinmao/Rudra/blob/cb1ea83514410da599e0b1abfcc6d558e1ebd1a8/src/graph.rs",
+]
+release_context = "No tagged release"
+release_context_status = "no_tagged_release"
+release_context_url = "https://github.com/shinmao/Rudra/releases"
+unresolved_review_facts = [
+  "The repository does not declare whether the Apache-2.0 and MIT root texts form an OR choice or their file-level scope.",
+]
+notes = [
+  "GitHub reports NOASSERTION; no global SPDX expression is inferred from the two observed license files.",
+  "The same SHA resolves in archived parent sslab-gatech/Rudra; this fork is not approved as a maintained dependency.",
+]
+
+[[source]]
+id = "kani"
+repository_url = "https://github.com/model-checking/kani"
+canonical_revision = "81fd3e4641699dd7f02561038d5ec0cfac9174cc"
+canonical_revision_url = "https://github.com/model-checking/kani/commit/81fd3e4641699dd7f02561038d5ec0cfac9174cc"
+canonical_revision_verified = true
+audit_document = "2026-08-16-jcode-verification-and-search-feeder-audit.md"
+audit_role = "T3 bounded model checking"
+reuse_class = "reference_only_independent_implementation"
+direct_source_approved = false
+maintenance_status = "active_not_archived"
+maintenance_decision = "active_reference_only"
+license_spdx = "MIT OR Apache-2.0"
+license_review_status = "verified_primary_incomplete_dependency_closure"
+license_evidence_urls = [
+  "https://github.com/model-checking/kani/blob/81fd3e4641699dd7f02561038d5ec0cfac9174cc/Cargo.toml",
+  "https://github.com/model-checking/kani/blob/81fd3e4641699dd7f02561038d5ec0cfac9174cc/LICENSE-APACHE",
+  "https://github.com/model-checking/kani/blob/81fd3e4641699dd7f02561038d5ec0cfac9174cc/LICENSE-MIT",
+]
+source_evidence_urls = [
+  "https://github.com/model-checking/kani/blob/81fd3e4641699dd7f02561038d5ec0cfac9174cc/kani_metadata/src/harness.rs",
+  "https://github.com/model-checking/kani/blob/81fd3e4641699dd7f02561038d5ec0cfac9174cc/kani-driver/src/harness_runner.rs",
+  "https://github.com/model-checking/kani/blob/81fd3e4641699dd7f02561038d5ec0cfac9174cc/kani-driver/src/cbmc_output_parser.rs",
+  "https://github.com/model-checking/kani/tree/81fd3e4641699dd7f02561038d5ec0cfac9174cc/kani-compiler/src/kani_middle/transform",
+  "https://github.com/model-checking/kani/blob/81fd3e4641699dd7f02561038d5ec0cfac9174cc/kani-driver/src/list/output.rs",
+  "https://github.com/model-checking/kani/blob/81fd3e4641699dd7f02561038d5ec0cfac9174cc/kani-driver/src/autoharness/mod.rs",
+  "https://github.com/model-checking/kani/tree/81fd3e4641699dd7f02561038d5ec0cfac9174cc/tests/cargo-kani/zero-harnesses-is-success",
+  "https://github.com/model-checking/kani/blob/81fd3e4641699dd7f02561038d5ec0cfac9174cc/kani-driver/src/concrete_playback/test_generator.rs",
+]
+release_context = "0.67.0, 2026-01-16"
+release_context_status = "mismatches_revision"
+release_context_url = "https://github.com/model-checking/kani/releases/tag/kani-0.67.0"
+unresolved_review_facts = [
+  "The license inventory does not provide immutable references for every external component.",
+  "Complete Kani, CBMC, solver, compiler, toolchain, gitlink, and dependency-license closure is not established by this repository SHA.",
+]
+notes = ["The 0.67.0 release tag identifies a different commit; the later audited SHA remains canonical."]
+
+[[source.nested_component]]
+id = "charon"
+path = "charon"
+repository_url = "https://github.com/AeneasVerif/charon"
+revision = "b250680abd40ff1aaa07081d0497dc2755ed112e"
+revision_url = "https://github.com/AeneasVerif/charon/commit/b250680abd40ff1aaa07081d0497dc2755ed112e"
+license_spdx = "Apache-2.0"
+license_review_status = "verified"
+evidence_urls = ["https://github.com/AeneasVerif/charon/blob/b250680abd40ff1aaa07081d0497dc2755ed112e/LICENSE.md"]
+notes = ["Pinned gitlink; broader toolchain closure remains outside this component license fact."]
+
+[[source.nested_component]]
+id = "firecracker"
+path = "firecracker"
+repository_url = "https://github.com/firecracker-microvm/firecracker"
+revision = "cd36c699f3cb3d531289aadee26c45c1306edcfc"
+revision_url = "https://github.com/firecracker-microvm/firecracker/commit/cd36c699f3cb3d531289aadee26c45c1306edcfc"
+license_spdx = "NOASSERTION"
+license_review_status = "unresolved_repository_wide_expression"
+evidence_urls = [
+  "https://github.com/firecracker-microvm/firecracker/blob/cd36c699f3cb3d531289aadee26c45c1306edcfc/LICENSE",
+  "https://github.com/firecracker-microvm/firecracker/blob/cd36c699f3cb3d531289aadee26c45c1306edcfc/NOTICE",
+  "https://github.com/firecracker-microvm/firecracker/blob/cd36c699f3cb3d531289aadee26c45c1306edcfc/THIRD-PARTY",
+]
+notes = ["Apache-2.0 root plus separately scoped BSD-style Chromium material; no global combined SPDX expression is asserted."]
+
+[[source.nested_component]]
+id = "s2n-quic"
+path = "tests/perf/s2n-quic"
+repository_url = "https://github.com/aws/s2n-quic"
+revision = "3e3e77ed57cad1a61e5d0657a78207b9425533f7"
+revision_url = "https://github.com/aws/s2n-quic/commit/3e3e77ed57cad1a61e5d0657a78207b9425533f7"
+license_spdx = "Apache-2.0"
+license_review_status = "verified"
+evidence_urls = [
+  "https://github.com/aws/s2n-quic/blob/3e3e77ed57cad1a61e5d0657a78207b9425533f7/LICENSE",
+  "https://github.com/aws/s2n-quic/blob/3e3e77ed57cad1a61e5d0657a78207b9425533f7/NOTICE",
+]
+notes = ["Pinned performance-fixture gitlink."]
