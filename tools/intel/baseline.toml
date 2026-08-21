@@ -1,0 +1,443 @@
+schema_version = 1
+signature_slice_schema = "jcode-semantic-slices-v1"
+hash_algorithm = "sha256"
+slice_order = "ascending order field"
+marker_cardinality = "start and end must each match exactly one ASCII-trimmed line"
+slice_bounds = "start inclusive, end exclusive, with start preceding end"
+
+required_paths = [
+  "Cargo.toml",
+  "Cargo.lock",
+  "crates/jcode-app-core/Cargo.toml",
+  "crates/jcode-app-core/src/agent/tools.rs",
+  "crates/jcode-app-core/src/agent/turn_loops.rs",
+  "crates/jcode-app-core/src/agent/turn_streaming_mpsc.rs",
+  "crates/jcode-app-core/src/server/file_touch_service.rs",
+  "crates/jcode-app-core/src/tool/mod.rs",
+  "crates/jcode-app-core/src/tool/agentgrep.rs",
+  "crates/jcode-app-core/src/tool/agentgrep/args.rs",
+  "crates/jcode-app-core/src/tool/agentgrep/context.rs",
+  "crates/jcode-app-core/src/tool/agentgrep_tests.rs",
+  "crates/jcode-app-core/src/tool/write.rs",
+  "crates/jcode-app-core/src/tool/edit.rs",
+  "crates/jcode-app-core/src/tool/multiedit.rs",
+  "crates/jcode-app-core/src/tool/patch.rs",
+  "crates/jcode-app-core/src/tool/apply_patch.rs",
+  "crates/jcode-base/Cargo.toml",
+  "crates/jcode-base/src/bus.rs",
+  "crates/jcode-base/src/config.rs",
+  "crates/jcode-base/src/config/default_file.rs",
+  "crates/jcode-base/src/embedding.rs",
+  "crates/jcode-base/src/memory.rs",
+  "crates/jcode-base/src/memory_graph.rs",
+  "crates/jcode-base/src/memory_types.rs",
+  "crates/jcode-base/src/session.rs",
+  "crates/jcode-base/src/storage.rs",
+  "crates/jcode-memory-types/Cargo.toml",
+  "crates/jcode-memory-types/src/lib.rs",
+  "crates/jcode-memory-types/src/graph.rs",
+  "crates/jcode-message-types/Cargo.toml",
+  "crates/jcode-message-types/src/lib.rs",
+  "crates/jcode-protocol/Cargo.toml",
+  "crates/jcode-protocol/src/lib.rs",
+  "crates/jcode-protocol/src/wire.rs",
+  "crates/jcode-storage/Cargo.toml",
+  "crates/jcode-storage/src/lib.rs",
+  "crates/jcode-tool-core/Cargo.toml",
+  "crates/jcode-tool-core/src/lib.rs",
+  "crates/jcode-tool-types/Cargo.toml",
+  "crates/jcode-tool-types/src/lib.rs",
+]
+
+[jcode]
+revision = "5ceaec8a602f36ddf871cc24a8dd55aa1ed7ae01"
+
+[agentgrep]
+version = "0.1.6"
+tag = "v0.1.6"
+revision = "b01b804008ab0662fa14e6b60b10bff61716e6f1"
+repository = "https://github.com/1jehuang/agentgrep.git"
+
+[normalization."rust-v1"]
+decode = "strict UTF-8; strip one leading UTF-8 BOM if present"
+line_endings = "replace CRLF and CR with LF"
+marker_match = "exact equality after trimming ASCII space and tab from both ends"
+extract = "include the unique start-marker line; exclude the unique end-marker line"
+line_transform = "trim ASCII space and tab from both ends"
+drop_empty_lines = true
+drop_line_prefixes = ["//"]
+join = "LF between retained lines and one terminal LF"
+encode = "UTF-8 without BOM before SHA-256"
+
+[normalization."toml-v1"]
+decode = "strict UTF-8; strip one leading UTF-8 BOM if present"
+line_endings = "replace CRLF and CR with LF"
+marker_match = "exact equality after trimming ASCII space and tab from both ends"
+extract = "include the unique start-marker line; exclude the unique end-marker line"
+line_transform = "trim ASCII space and tab from both ends"
+drop_empty_lines = true
+drop_line_prefixes = ["#"]
+join = "LF between retained lines and one terminal LF"
+encode = "UTF-8 without BOM before SHA-256"
+
+[normalization."text-v1"]
+decode = "strict UTF-8; strip one leading UTF-8 BOM if present"
+line_endings = "replace CRLF and CR with LF"
+marker_match = "exact equality after trimming ASCII space and tab from both ends"
+extract = "include the unique start-marker line; exclude the unique end-marker line"
+line_transform = "trim ASCII space and tab from the right only"
+drop_empty_lines = false
+drop_line_prefixes = []
+join = "LF between retained lines and one terminal LF"
+encode = "UTF-8 without BOM before SHA-256"
+
+[[signature_slice]]
+order = 1
+id = "root-workspace-members"
+path = "Cargo.toml"
+normalization = "toml-v1"
+start_marker = "[workspace]"
+end_marker = "[lib]"
+sha256 = "c3b784f7b595ced853382778133458503054a788fb6ed1aa6869a1ee0e306fb6"
+
+[[signature_slice]]
+order = 2
+id = "app-core-integration-dependencies"
+path = "crates/jcode-app-core/Cargo.toml"
+normalization = "toml-v1"
+start_marker = "# Foundational layer (provider, auth, config, session, message, memory, ...)."
+end_marker = "[features]"
+sha256 = "3064c10ff16107259c1cce4acc6b47e7e2ce5272dc6aa896adc23848b61312c9"
+
+[[signature_slice]]
+order = 3
+id = "tool-output-contract"
+path = "crates/jcode-tool-types/src/lib.rs"
+normalization = "rust-v1"
+start_marker = "pub struct ToolOutput {"
+end_marker = "pub struct ToolImage {"
+sha256 = "13b72a36a43a4a7f58e8847910cdd8aea3c7b491335437a9fb020c97f179afe1"
+
+[[signature_slice]]
+order = 4
+id = "tool-name-aliases"
+path = "crates/jcode-tool-types/src/lib.rs"
+normalization = "rust-v1"
+start_marker = "pub fn resolve_tool_name(name: &str) -> &str {"
+end_marker = "#[cfg(test)]"
+sha256 = "d9ec5cfe5a31701da5ecc195b47c2ac0c75c096fa5fa9bf48ae2408ed40ce3b4"
+
+[[signature_slice]]
+order = 5
+id = "tool-context-contract"
+path = "crates/jcode-tool-core/src/lib.rs"
+normalization = "rust-v1"
+start_marker = "pub struct ToolContext {"
+end_marker = "#[derive(Debug, Clone, Copy, PartialEq, Eq)]"
+sha256 = "672adc0598418eb8a616ae3a6536921f150672929807e4ac5c1a4ba92fd8ac83"
+
+[[signature_slice]]
+order = 6
+id = "tool-trait-contract"
+path = "crates/jcode-tool-core/src/lib.rs"
+normalization = "rust-v1"
+start_marker = "pub trait Tool: Send + Sync {"
+end_marker = "mod tests {"
+sha256 = "0c55a9bb2df82ab7c059064a5034e4aa1889546045eb55f8824239e1bd47216d"
+
+[[signature_slice]]
+order = 7
+id = "tool-registry-critical-tools"
+path = "crates/jcode-app-core/src/tool/mod.rs"
+normalization = "rust-v1"
+start_marker = "fn base_tools(skills: &Arc<RwLock<SkillRegistry>>) -> HashMap<String, Arc<dyn Tool>> {"
+end_marker = "let nonzero: Vec<String> = timings"
+sha256 = "34afc4ffcb650688b69f84293e3e6c4a63d82c5ceec47c1de46fb2386eaeebe6"
+
+[[signature_slice]]
+order = 8
+id = "tool-output-metadata-context-guard"
+path = "crates/jcode-app-core/src/tool/mod.rs"
+normalization = "rust-v1"
+start_marker = "if current_tokens >= threshold_tokens {"
+end_marker = "/// Register a tool dynamically (for MCP tools, etc.)"
+sha256 = "1d2e3a7f123b2d3bdbb6106b9654caa30a89340f78c1dadf3bcbaf68fe9a03d9"
+
+[[signature_slice]]
+order = 9
+id = "tool-output-model-conversion"
+path = "crates/jcode-app-core/src/agent/tools.rs"
+normalization = "rust-v1"
+start_marker = "pub(super) fn tool_output_to_content_blocks("
+end_marker = "pub(super) fn print_tool_summary(tool: &ToolCall) {"
+sha256 = "ea0fed9db8167f969559016939202681c62359f1e1a478dcbd780f24ac4894b1"
+
+[[signature_slice]]
+order = 10
+id = "message-tool-result-contract"
+path = "crates/jcode-message-types/src/lib.rs"
+normalization = "rust-v1"
+start_marker = "pub enum ContentBlock {"
+end_marker = "impl Message {"
+sha256 = "2e95a5fc9961eaaa44911b930343208d53b83dd9942f1a4c4930262ab45464a4"
+
+[[signature_slice]]
+order = 11
+id = "agentgrep-input-contract"
+path = "crates/jcode-app-core/src/tool/agentgrep.rs"
+normalization = "rust-v1"
+start_marker = "struct AgentGrepInput {"
+end_marker = "/// Default cap on rendered grep matches."
+sha256 = "184fe6bc70d5164e7efb9347d8bb5c989537c3a153fdadee17835d0b508d8ca6"
+
+[[signature_slice]]
+order = 12
+id = "agentgrep-public-tool-contract"
+path = "crates/jcode-app-core/src/tool/agentgrep.rs"
+normalization = "rust-v1"
+start_marker = "impl Tool for AgentGrepTool {"
+end_marker = "fn run_agentgrep_blocking(params: &AgentGrepInput, ctx: &ToolContext) -> Result<ToolOutput> {"
+sha256 = "2d669b3250dcc372e4c9a4692c52dc75eca1aed31c2b84a907c28766c14288ce"
+
+[[signature_slice]]
+order = 13
+id = "agentgrep-mode-dispatch"
+path = "crates/jcode-app-core/src/tool/agentgrep.rs"
+normalization = "rust-v1"
+start_marker = "fn execute_linked_agentgrep("
+end_marker = "fn resolve_path_arg(ctx: &ToolContext, path: &str) -> PathBuf {"
+sha256 = "a4d1493955d2f59a5ba7d1da0a27717b76ce8e356896f7c0c28dbc5546cbcbef"
+
+[[signature_slice]]
+order = 14
+id = "agentgrep-grep-find-args"
+path = "crates/jcode-app-core/src/tool/agentgrep/args.rs"
+normalization = "rust-v1"
+start_marker = "pub(super) fn build_grep_args(params: &AgentGrepInput, ctx: &ToolContext) -> Result<GrepArgs> {"
+end_marker = "pub(super) fn build_outline_args("
+sha256 = "b74fac8d800d20fa31ad580b9a008c3975d98e38aef26e4cbcdcfb98b7d3bbeb"
+
+[[signature_slice]]
+order = 15
+id = "agentgrep-trace-smart-args"
+path = "crates/jcode-app-core/src/tool/agentgrep/args.rs"
+normalization = "rust-v1"
+start_marker = "pub(super) fn build_smart_args_and_query("
+end_marker = "fn outline_file_arg(params: &AgentGrepInput) -> Result<String> {"
+sha256 = "bf08dc1dd7ea23e8bcbcb7606acca72812a39d89d134ed726499aa9b9f647e3b"
+
+[[signature_slice]]
+order = 16
+id = "agentgrep-context-assembly"
+path = "crates/jcode-app-core/src/tool/agentgrep/context.rs"
+normalization = "rust-v1"
+start_marker = "pub(super) fn maybe_write_context_json("
+end_marker = "fn collect_tool_exposures(session: &Session) -> Vec<ToolExposureObservation> {"
+sha256 = "326b03ed8c8e5a53f29d5368b885ce392d2ae4b6fde13a674fd35a37258df2ca"
+
+[[signature_slice]]
+order = 17
+id = "agentgrep-public-schema-test"
+path = "crates/jcode-app-core/src/tool/agentgrep_tests.rs"
+normalization = "rust-v1"
+start_marker = "fn schema_only_advertises_common_public_fields() {"
+end_marker = "fn input_defaults_missing_mode_to_grep() {"
+sha256 = "6733abc368f30a763f13357a324c9844807da4fac390a497f8b4482702997522"
+
+[[signature_slice]]
+order = 18
+id = "agentgrep-hidden-smart-test"
+path = "crates/jcode-app-core/src/tool/agentgrep_tests.rs"
+normalization = "rust-v1"
+start_marker = "async fn execute_smart_accepts_query_fallback() {"
+end_marker = "fn trace_output_collects_symbols_regions_and_focus() {"
+sha256 = "b74676844d1392774bec8d79e8438957ffefcee5fc67de892297fd9f86124e0e"
+
+[[signature_slice]]
+order = 19
+id = "file-touch-bus-contract"
+path = "crates/jcode-base/src/bus.rs"
+normalization = "rust-v1"
+start_marker = "/// Type of file operation for swarm awareness"
+end_marker = "/// Streaming output tail for a swarm worker session, used to render the inline"
+sha256 = "4698718ce750b72edc97332261510fcca13e3315a2173a9b8892267db64b7b59"
+
+[[signature_slice]]
+order = 20
+id = "bus-volatile-transport"
+path = "crates/jcode-base/src/bus.rs"
+normalization = "rust-v1"
+start_marker = "fn new() -> Bus {"
+end_marker = "pub fn latest_update_status(&self) -> Option<UpdateStatus> {"
+sha256 = "0c2e842247f6bb02f209d8f75b83c7c8856e34e25b33f19b1b0f4fe001e4ad51"
+
+[[signature_slice]]
+order = 21
+id = "memory-owner-modules"
+path = "crates/jcode-base/src/memory.rs"
+normalization = "rust-v1"
+start_marker = "#[path = \"memory/activity.rs\"]"
+end_marker = "const LEGACY_NOTE_CATEGORY: &str = \"note\";"
+sha256 = "57068137afbd89d87f42e82e48c4a656a0321e534a656ef16063e2deab29c759"
+
+[[signature_slice]]
+order = 22
+id = "session-owner-modules"
+path = "crates/jcode-base/src/session.rs"
+normalization = "rust-v1"
+start_marker = "mod crash;"
+end_marker = "fn stored_messages_to_messages(messages: &[StoredMessage]) -> Vec<Message> {"
+sha256 = "1ab46a62e21ad4ebfd5b32c06330699279fab1afbbb1a75836d284e547739abb"
+
+[[signature_slice]]
+order = 23
+id = "embedding-owner-facade"
+path = "crates/jcode-base/src/embedding.rs"
+normalization = "rust-v1"
+start_marker = "//! Embedding facade for jcode."
+end_marker = "/// LRU cache capacity for recent embeddings"
+sha256 = "1f864593a6000cebc4c8968652ea57857abe5edf6a56e61495245661992f0630"
+
+[[signature_slice]]
+order = 24
+id = "memory-graph-version"
+path = "crates/jcode-memory-types/src/graph.rs"
+normalization = "rust-v1"
+start_marker = "pub const GRAPH_VERSION: u32 = 2;"
+end_marker = "#[derive(Debug)]"
+sha256 = "cb86b2c249d591db600a1a98e853a341641ae393cc939fdeda77d3d99ce07d66"
+
+[[signature_slice]]
+order = 25
+id = "durable-storage-root"
+path = "crates/jcode-storage/src/lib.rs"
+normalization = "rust-v1"
+start_marker = "/// Durable state directory for state that must survive reboots."
+end_marker = "/// Resolve jcode's app-owned config directory."
+sha256 = "e3746fa19da6d0e78a604c026f2fb78194d3b1fe81893b854b7f5639ae963ae8"
+
+[[signature_slice]]
+order = 26
+id = "protocol-library-boundary"
+path = "crates/jcode-protocol/src/lib.rs"
+normalization = "rust-v1"
+start_marker = "mod comm_format;"
+end_marker = "#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]"
+sha256 = "9166c8aea0026117773d83fa59c5ae6b8dde9ea461730c47b0cc6c9e529d045a"
+
+[[signature_slice]]
+order = 27
+id = "protocol-tool-event-wire"
+path = "crates/jcode-protocol/src/wire.rs"
+normalization = "rust-v1"
+start_marker = "/// Tool call started"
+end_marker = "/// Rendered images produced during the live turn, including image-bearing"
+sha256 = "177a79175697e3554935bb296b6f6c7e6c8c896549c484dc0beaf0db980f1aad"
+
+[[signature_slice]]
+order = 28
+id = "write-direct-mutation"
+path = "crates/jcode-app-core/src/tool/write.rs"
+normalization = "rust-v1"
+start_marker = "async fn execute(&self, input: Value, ctx: ToolContext) -> Result<ToolOutput> {"
+end_marker = "/// Generate a compact diff: \"42- old\" / \"42+ new\" (max 20 lines)"
+sha256 = "05ef9770b493a35057a3fde0080498d94516e4acb3588e3e4ba67c9dbc9ad159"
+
+[[signature_slice]]
+order = 29
+id = "edit-direct-mutation"
+path = "crates/jcode-app-core/src/tool/edit.rs"
+normalization = "rust-v1"
+start_marker = "async fn execute(&self, input: Value, ctx: ToolContext) -> Result<ToolOutput> {"
+end_marker = "/// Find the 1-based line number where a substring starts"
+sha256 = "26ed6e81db90b0c37410ea2a54225faeb4c6ee8a5e40632ea673ba1d668d7094"
+
+[[signature_slice]]
+order = 30
+id = "multiedit-direct-mutation"
+path = "crates/jcode-app-core/src/tool/multiedit.rs"
+normalization = "rust-v1"
+start_marker = "async fn execute(&self, input: Value, ctx: ToolContext) -> Result<ToolOutput> {"
+end_marker = "/// Generate a compact diff: \"42- old\" / \"42+ new\" (max 30 lines)"
+sha256 = "9b837e1409ed63bd3e1bd866aadb8595277f4a6283fbea9d1305b7d385cd8afa"
+
+[[signature_slice]]
+order = 31
+id = "patch-direct-mutation"
+path = "crates/jcode-app-core/src/tool/patch.rs"
+normalization = "rust-v1"
+start_marker = "async fn execute(&self, input: Value, ctx: ToolContext) -> Result<ToolOutput> {"
+end_marker = "fn parse_patch(text: &str) -> Result<Vec<FilePatch>> {"
+sha256 = "c177a9d05ca9b77783537ac31b73c58fdbaec8f624dcc69dae44d1da945ff95a"
+
+[[signature_slice]]
+order = 32
+id = "apply-patch-direct-mutation"
+path = "crates/jcode-app-core/src/tool/apply_patch.rs"
+normalization = "rust-v1"
+start_marker = "async fn execute(&self, input: Value, ctx: ToolContext) -> Result<ToolOutput> {"
+end_marker = "fn publish_file_touch("
+sha256 = "d922ed43065981c3ab9d392fb6232721c6c7d51dc6fe726228fdccdedb10f47f"
+
+[[signature_slice]]
+order = 33
+id = "file-touch-service-state"
+path = "crates/jcode-app-core/src/server/file_touch_service.rs"
+normalization = "rust-v1"
+start_marker = "pub(crate) struct FileTouchService {"
+end_marker = "impl FileTouchService {"
+sha256 = "aef30dc36b132e78d917d6472cd60d5b93ccdc06c4ce24091c856d9d91ffce3a"
+
+[[signature_slice]]
+order = 34
+id = "file-touch-service-recording"
+path = "crates/jcode-app-core/src/server/file_touch_service.rs"
+normalization = "rust-v1"
+start_marker = "pub(crate) async fn record_touch(&self, path: PathBuf, access: FileAccess) {"
+end_marker = "/// Cloned snapshot of all accesses recorded for `path`, or `None` if the"
+sha256 = "110ba66ae7802247b385d58436dab7249e58f2aafc8f79ff351ccf3e74126147"
+
+[[signature_slice]]
+order = 35
+id = "tool-profile-selection"
+path = "crates/jcode-base/src/config.rs"
+normalization = "rust-v1"
+start_marker = "fn base_allowed_tools(&self) -> Option<HashSet<String>> {"
+end_marker = "fn normalized_enabled_tools(&self) -> (HashSet<String>, bool) {"
+sha256 = "1cbd4607bcbfc404ae711e6c768dd7dc1b88125ffdb8feed5c5e470e74806d80"
+
+[[signature_slice]]
+order = 36
+id = "default-tool-profile-template"
+path = "crates/jcode-base/src/config/default_file.rs"
+normalization = "text-v1"
+start_marker = "[tools]"
+end_marker = "[acp]"
+sha256 = "96d7ec609793d443af878263c71683c839bd428e7f2eed205d1a4b6049bff239"
+
+[[signature_slice]]
+order = 37
+id = "native-tool-result-turn-loop"
+path = "crates/jcode-app-core/src/agent/turn_loops.rs"
+normalization = "rust-v1"
+start_marker = "let native_result = match tool_result {"
+end_marker = "// Send result back to SDK bridge"
+sha256 = "20d0d43c469d1bcb2ac8074964c9f621b274090a5a79c6617920fdc2c03a9c75"
+
+[[signature_slice]]
+order = 38
+id = "native-tool-result-streaming-loop"
+path = "crates/jcode-app-core/src/agent/turn_streaming_mpsc.rs"
+normalization = "rust-v1"
+start_marker = "let native_result = match tool_result {"
+end_marker = "if let Some(sender) = self.provider.native_result_sender() {"
+sha256 = "20d0d43c469d1bcb2ac8074964c9f621b274090a5a79c6617920fdc2c03a9c75"
+
+[[signature_slice]]
+order = 39
+id = "tool-output-wire-event-conversion"
+path = "crates/jcode-app-core/src/agent/turn_streaming_mpsc.rs"
+normalization = "rust-v1"
+start_marker = "let output = cap_tool_output_for_history(&tc.name, output);"
+end_marker = "let side_pane_images ="
+sha256 = "74dc83a075ad89f2a861cdaf8b6d0507df673637b96ab38e92287ae5253585cf"
