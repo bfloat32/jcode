@@ -1,0 +1,261 @@
+schema_version = 1
+manifest_kind = "jcode-intel-toolchains"
+
+[loader_policy]
+unknown_fields = "reject"
+duplicate_ids = "reject"
+missing_required_cells = "reject"
+mutable_source_revisions = "reject"
+unresolved_planned_cells = "reject"
+unverified_available_state = "reject"
+
+[identity_contract]
+algorithm = "sha256"
+encoding = "lowercase-hex"
+canonicalization = "jcode-intel-toolchains-canonical-toml-v1"
+tool_id_field = "tool_id"
+provider_id_field = "provider_id"
+immutable_source_revision = "full_commit_sha_or_content_digest"
+forbidden_source_revisions = ["branch", "tag", "latest", "stable", "nightly", "floating_path"]
+
+[tool_record_contract]
+required_fields = [
+  "tool_id",
+  "role",
+  "version",
+  "version_output",
+  "source_revision",
+  "source_verification",
+  "binary_path",
+  "binary_sha256",
+  "binary_verification",
+  "configuration_path",
+  "configuration_sha256",
+  "configuration_verification",
+  "support_cells",
+  "readiness",
+]
+unavailable_value = "unavailable"
+
+[provider_record_contract]
+required_fields = [
+  "provider_id",
+  "source_revision",
+  "source_verified",
+  "binary_path",
+  "binary_version_output",
+  "binary_sha256",
+  "binary_verified",
+  "configuration_path",
+  "configuration_sha256",
+  "configuration_verified",
+  "support_cells",
+  "support_verified",
+  "self_test",
+  "readiness",
+  "unavailable_reason",
+  "owning_task",
+]
+available_requires = [
+  "immutable_source_revision_verified",
+  "binary_path_resolved_without_mutable_PATH_identity",
+  "binary_version_output_verified",
+  "binary_sha256_verified",
+  "configuration_sha256_verified",
+  "supported_target_cell_verified",
+  "self_test_passed",
+  "sandbox_and_policy_prerequisites_satisfied",
+]
+missing_requirement = "unavailable"
+
+[measurement]
+recorded_at = "2026-08-16T22:55:01Z"
+host = "x86_64-unknown-linux-gnu"
+active_rustup_toolchain = "stable-x86_64-unknown-linux-gnu"
+active_rustup_toolchain_is_repository_pinned = false
+installed_targets = ["x86_64-unknown-linux-gnu"]
+repository_rust_toolchain_file = "unavailable"
+release_toolchain_identity_ready = false
+
+[[tool]]
+tool_id = "cargo-local-stable"
+role = "root_workspace_package_manager"
+version = "1.97.1"
+version_output = "cargo 1.97.1 (c980f4866 2026-06-30)"
+source_revision = "c980f4866141969fab6254a680546a277789d6f0"
+source_verification = "version_output_only"
+binary_path = "/home/syntetic/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo"
+binary_sha256 = "828980723df339d62434390e9fb8ef8831036583343ae2316b7ab5646b5c1953"
+binary_verification = "measured_sha256"
+configuration_path = ".cargo/config.toml"
+configuration_sha256 = "19dc6e86b6475d1aabc01167624adf991ea4be438fbba690f10c33ff45385b0c"
+configuration_verification = "measured_sha256"
+support_cells = [
+  { target = "x86_64-unknown-linux-gnu", state = "installed", verification = "rustup_target_list_installed" },
+]
+readiness = "recorded_not_release_pinned"
+
+[[tool]]
+tool_id = "rustc-local-stable"
+role = "root_workspace_compiler"
+version = "1.97.1"
+version_output = "rustc 1.97.1 (8bab26f4f 2026-07-14); LLVM 22.1.6"
+source_revision = "8bab26f4f68e0e26f0bb7960be334d5b520ea452"
+source_verification = "version_output_only"
+binary_path = "/home/syntetic/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc"
+binary_sha256 = "d3a664c970a9fd8361b64194861bebc1ae37b9054e5ee3400dc1c9e691797eea"
+binary_verification = "measured_sha256"
+configuration_path = ".cargo/config.toml"
+configuration_sha256 = "19dc6e86b6475d1aabc01167624adf991ea4be438fbba690f10c33ff45385b0c"
+configuration_verification = "measured_sha256"
+support_cells = [
+  { target = "x86_64-unknown-linux-gnu", state = "installed", verification = "rustup_target_list_installed" },
+]
+readiness = "recorded_not_release_pinned"
+
+[[tool]]
+tool_id = "agentgrep-0.1.6"
+role = "linked_agent_visible_T0_search"
+version = "0.1.6"
+version_output = "unavailable"
+source_revision = "b01b804008ab0662fa14e6b60b10bff61716e6f1"
+source_verification = "Cargo.lock_and_baseline.toml_match"
+binary_path = "unavailable"
+binary_sha256 = "unavailable"
+binary_verification = "not_a_standalone_binary_in_current_integration"
+configuration_path = "crates/jcode-app-core/Cargo.toml"
+configuration_sha256 = "b262854886cad0d047d6f23b621d22a9b85b78ea5481164dd9a12170725dfe4b"
+configuration_verification = "measured_sha256"
+support_cells = [
+  { target = "x86_64-unknown-linux-gnu", state = "not_executed", verification = "unavailable" },
+]
+readiness = "identity_recorded_execution_not_verified"
+
+[[provider]]
+provider_id = "stable-rust-analysis"
+source_revision = "unavailable"
+source_verified = false
+binary_path = "unavailable"
+binary_version_output = "unavailable"
+binary_sha256 = "unavailable"
+binary_verified = false
+configuration_path = "unavailable"
+configuration_sha256 = "unavailable"
+configuration_verified = false
+support_cells = []
+support_verified = false
+self_test = "not_executed"
+readiness = "unavailable"
+unavailable_reason = "rust-analyzer_and_SCIP_identity_configuration_digest_and_support_are_not_yet_verified"
+owning_task = "task-9"
+
+[[provider]]
+provider_id = "rustc-dylint-unsafe-screen"
+source_revision = "unavailable"
+source_verified = false
+binary_path = "unavailable"
+binary_version_output = "unavailable"
+binary_sha256 = "unavailable"
+binary_verified = false
+configuration_path = "unavailable"
+configuration_sha256 = "unavailable"
+configuration_verified = false
+support_cells = []
+support_verified = false
+self_test = "not_executed"
+readiness = "unavailable"
+unavailable_reason = "standalone_lockfile_pinned_toolchain_provider_binary_detector_set_sandbox_and_calibration_are_absent"
+owning_task = "task-16"
+
+[[provider]]
+provider_id = "kani"
+source_revision = "unavailable"
+source_verified = false
+binary_path = "unavailable"
+binary_version_output = "unavailable"
+binary_sha256 = "unavailable"
+binary_verified = false
+configuration_path = "unavailable"
+configuration_sha256 = "unavailable"
+configuration_verified = false
+support_cells = []
+support_verified = false
+self_test = "not_executed"
+readiness = "unavailable"
+unavailable_reason = "kani_CBMC_compiler_support_digests_sandbox_and_negative_controls_are_not_verified"
+owning_task = "task-17"
+
+[[provider]]
+provider_id = "verus"
+source_revision = "unavailable"
+source_verified = false
+binary_path = "unavailable"
+binary_version_output = "unavailable"
+binary_sha256 = "unavailable"
+binary_verified = false
+configuration_path = "unavailable"
+configuration_sha256 = "unavailable"
+configuration_verified = false
+support_cells = []
+support_verified = false
+self_test = "not_executed"
+readiness = "unavailable"
+unavailable_reason = "verus_rustc_solver_vstd_macro_trust_sandbox_and_no_cheating_cells_are_not_verified"
+owning_task = "task-18"
+
+[[provider]]
+provider_id = "runtime-profiler"
+source_revision = "unavailable"
+source_verified = false
+binary_path = "unavailable"
+binary_version_output = "unavailable"
+binary_sha256 = "unavailable"
+binary_verified = false
+configuration_path = "unavailable"
+configuration_sha256 = "unavailable"
+configuration_verified = false
+support_cells = []
+support_verified = false
+self_test = "not_executed"
+readiness = "unavailable"
+unavailable_reason = "profiler_allocator_runtime_sandbox_measurement_contract_and_target_support_are_not_verified"
+owning_task = "task-20"
+
+[[provider]]
+provider_id = "linker-analysis"
+source_revision = "unavailable"
+source_verified = false
+binary_path = "unavailable"
+binary_version_output = "unavailable"
+binary_sha256 = "unavailable"
+binary_verified = false
+configuration_path = "unavailable"
+configuration_sha256 = "unavailable"
+configuration_verified = false
+support_cells = []
+support_verified = false
+self_test = "not_executed"
+readiness = "unavailable"
+unavailable_reason = "linker_reference_linker_support_artifacts_configuration_sandbox_and_target_cells_are_not_verified"
+owning_task = "task-20"
+
+[task_16_follow_up]
+provider_id = "rustc-dylint-unsafe-screen"
+required_cells = [
+  "standalone_build_root_path",
+  "standalone_Cargo_lock_sha256",
+  "rust_toolchain_toml_sha256",
+  "exact_rustc_vV",
+  "installed_component_versions",
+  "dylint_version_and_sha256",
+  "provider_binary_path_version_and_sha256",
+  "ordered_detector_set_and_digest",
+  "configuration_environment_scope_and_fix_mode_digests",
+  "supported_target_cells",
+  "sandbox_self_test_calibration_health_and_policy",
+]
+completion_state = "pending"
+
+[task_23_finalization]
+required_action = "validate_every_enabled_provider_cell_and_reject_mutable_or_unresolved_identity"
+completion_state = "pending"
